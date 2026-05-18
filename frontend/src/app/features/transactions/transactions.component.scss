@@ -1,0 +1,12 @@
+.page-actions { display: flex; gap: var(--space-sm); }
+.filter-bar { display: flex; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap: wrap; }
+.filter-bar .form-select, .filter-bar .form-input { max-width: 200px; }
+.income { color: var(--color-success); }
+.expense { color: var(--color-danger); }
+.pagination { display: flex; align-items: center; justify-content: center; gap: var(--space-md); margin-top: var(--space-md); }
+.page-info { font-size: 14px; color: var(--color-text-secondary); }
+
+@media (max-width: 768px) {
+  .filter-bar { flex-direction: column; }
+  .filter-bar .form-select, .filter-bar .form-input { max-width: 100%; }
+}

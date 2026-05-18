@@ -1,0 +1,98 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Olá, {{ userName }} 👋</h1>
+      <p class="page-subtitle">Resumo financeiro de {{ currentMonth }}</p>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-4 summary-grid">
+    <div class="card summary-card">
+      <div class="summary-label">Saldo</div>
+      <div class="summary-value" [class.positive]="summary.balance >= 0" [class.negative]="summary.balance < 0">
+        {{ formatCurrency(summary.balance) }}
+      </div>
+      <div class="summary-meta">Este mês</div>
+    </div>
+    <div class="card summary-card">
+      <div class="summary-label">Receitas</div>
+      <div class="summary-value income">{{ formatCurrency(summary.income) }}</div>
+      <div class="summary-indicator income">↑ Entradas</div>
+    </div>
+    <div class="card summary-card">
+      <div class="summary-label">Despesas</div>
+      <div class="summary-value expense">{{ formatCurrency(summary.expense) }}</div>
+      <div class="summary-indicator expense">↓ Saídas</div>
+    </div>
+    <div class="card summary-card">
+      <div class="summary-label">Taxa de Poupança</div>
+      <div class="summary-value">{{ summary.savings_rate }}%</div>
+      <div class="progress-bar" style="margin-top: 8px">
+        <div class="progress-fill" [style.width.%]="summary.savings_rate" [style.background]="summary.savings_rate >= 20 ? 'var(--color-success)' : 'var(--color-warning)'"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- Recent Transactions -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Transações Recentes</h2>
+        <a routerLink="/transactions" class="btn btn-ghost btn-sm">Ver todas →</a>
+      </div>
+
+      <div *ngIf="recentTransactions.length === 0" class="empty-state">
+        <p class="empty-state-text">Nenhuma transação ainda</p>
+        <a routerLink="/transactions" class="btn btn-primary btn-sm">Adicionar primeira</a>
+      </div>
+
+      <div class="tx-list">
+        @for (tx of recentTransactions; track tx.id) {
+          <div class="tx-item">
+            <div class="tx-icon" [style.background]="tx.category_color + '18'" [style.color]="tx.category_color">
+              {{ tx.category_icon || '●' }}
+            </div>
+            <div class="tx-info">
+              <div class="tx-desc">{{ tx.description }}</div>
+              <div class="tx-meta">{{ tx.category_name }} · {{ tx.transaction_date }}</div>
+            </div>
+            <div class="tx-amount" [class.income]="tx.type === 'income'" [class.expense]="tx.type === 'expense'">
+              {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Budget Progress -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Orçamentos Ativos</h2>
+        <a routerLink="/budgets" class="btn btn-ghost btn-sm">Gerir →</a>
+      </div>
+
+      <div *ngIf="budgets.length === 0" class="empty-state">
+        <p class="empty-state-text">Nenhum orçamento activo</p>
+        <a routerLink="/budgets" class="btn btn-primary btn-sm">Criar orçamento</a>
+      </div>
+
+      @for (b of budgets; track b.id) {
+        <div class="budget-item">
+          <div class="budget-header">
+            <span class="budget-name">{{ b.name }}</span>
+            <span class="budget-values">{{ formatCurrency(b.spent || 0) }} / {{ formatCurrency(b.limit_amount) }}</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="b.percentage || 0"
+                 [style.background]="getBudgetColor(b.percentage || 0)"></div>
+          </div>
+          <div class="budget-pct" [style.color]="getBudgetColor(b.percentage || 0)">
+            {{ b.percentage || 0 }}% utilizado
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

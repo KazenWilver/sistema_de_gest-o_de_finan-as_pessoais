@@ -1,0 +1,124 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Transações</h1>
+      <p class="page-subtitle">{{ total }} transações encontradas</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary btn-sm" (click)="exportCsv()">📥 Exportar CSV</button>
+      <button class="btn btn-primary" (click)="openCreate()">+ Nova Transação</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card filter-bar">
+    <select class="form-select" [(ngModel)]="filterType" (change)="applyFilter()">
+      <option value="">Todos os tipos</option>
+      <option value="income">Receita</option>
+      <option value="expense">Despesa</option>
+    </select>
+    <input type="date" class="form-input" [(ngModel)]="filterFrom" (change)="applyFilter()" placeholder="De">
+    <input type="date" class="form-input" [(ngModel)]="filterTo" (change)="applyFilter()" placeholder="Até">
+  </div>
+
+  <!-- Table -->
+  <div class="card" style="padding:0">
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Conta</th>
+            <th>Valor</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (tx of transactions; track tx.id) {
+            <tr>
+              <td>{{ tx.transaction_date }}</td>
+              <td><strong>{{ tx.description }}</strong></td>
+              <td>
+                <span class="badge" [class.badge-income]="tx.type==='income'" [class.badge-expense]="tx.type==='expense'">
+                  {{ tx.category_name }}
+                </span>
+              </td>
+              <td>{{ tx.account_name }}</td>
+              <td [class.income]="tx.type==='income'" [class.expense]="tx.type==='expense'" style="font-weight:600">
+                {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+              </td>
+              <td>
+                <button class="btn btn-ghost btn-sm" (click)="openEdit(tx)">✏️</button>
+                <button class="btn btn-ghost btn-sm" (click)="delete(tx.id)">🗑️</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="transactions.length === 0" class="empty-state">
+      <p class="empty-state-text">Nenhuma transação encontrada</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <button class="btn btn-ghost btn-sm" (click)="prevPage()" [disabled]="page === 1">← Anterior</button>
+    <span class="page-info">Página {{ page }} de {{ totalPages }}</span>
+    <button class="btn btn-ghost btn-sm" (click)="nextPage()" [disabled]="page >= totalPages">Seguinte →</button>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" *ngIf="showModal" (click)="showModal = false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">{{ editMode ? 'Editar' : 'Nova' }} Transação</h3>
+        <button class="modal-close" (click)="showModal = false">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" [(ngModel)]="form.type">
+          <option value="income">Receita</option>
+          <option value="expense">Despesa</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Valor</label>
+        <input class="form-input" type="number" [(ngModel)]="form.amount" placeholder="0.00" min="0.01" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <input class="form-input" [(ngModel)]="form.description" placeholder="Descrição da transação">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input class="form-input" type="date" [(ngModel)]="form.transaction_date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Conta</label>
+        <select class="form-select" [(ngModel)]="form.account_id">
+          @for (a of accounts; track a.id) { <option [value]="a.id">{{ a.name }}</option> }
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select class="form-select" [(ngModel)]="form.category_id">
+          @for (c of filteredCategories; track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Método de Pagamento</label>
+        <input class="form-input" [(ngModel)]="form.payment_method" placeholder="Ex: multicaixa, cash">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" (click)="showModal = false">Cancelar</button>
+        <button class="btn btn-primary" (click)="save()">{{ editMode ? 'Guardar' : 'Criar' }}</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,187 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--color-bg-card);
+  border-right: 1px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+  transition: width var(--transition-normal);
+  overflow: hidden;
+}
+
+.sidebar-collapsed .sidebar { width: var(--sidebar-collapsed); }
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-md);
+  min-height: var(--header-height);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.logo-icon { font-size: 24px; }
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+}
+
+.sidebar-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+  &:hover { background: var(--color-bg-secondary); }
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+
+  &:hover { background: var(--color-bg-secondary); color: var(--color-text); }
+  &.active { background: var(--color-primary-light); color: var(--color-primary); font-weight: 600; }
+}
+
+.nav-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+.nav-label { white-space: nowrap; overflow: hidden; }
+
+.sidebar-footer {
+  padding: var(--space-sm);
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* ── Main ── */
+.main-wrapper {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  transition: margin-left var(--transition-normal);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-collapsed .main-wrapper { margin-left: var(--sidebar-collapsed); }
+
+.header {
+  height: var(--header-height);
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-lg);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.8);
+
+  [data-theme="dark"] & {
+    background: rgba(28, 28, 30, 0.8);
+  }
+}
+
+.header-spacer { flex: 1; }
+
+.header-right { display: flex; align-items: center; gap: var(--space-md); }
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #FFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.mobile-menu-btn { display: none; }
+
+.main-content {
+  flex: 1;
+  background: var(--color-bg-secondary);
+}
+
+/* ── Mobile ── */
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: var(--sidebar-width) !important;
+    &.mobile-open { transform: translateX(0); }
+  }
+  .main-wrapper { margin-left: 0 !important; }
+  .mobile-menu-btn { display: flex; }
+  .sidebar-toggle { display: none; }
+  .mobile-overlay { display: block; }
+  .user-name { display: none; }
+}

@@ -1,0 +1,3 @@
+.settings-grid { display: flex; flex-direction: column; gap: var(--space-md); max-width: 600px; }
+.theme-option { display: flex; align-items: center; justify-content: space-between; margin-top: var(--space-md); }
+.msg { font-size: 14px; color: var(--color-success); margin: var(--space-sm) 0; }

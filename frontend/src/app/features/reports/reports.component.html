@@ -1,0 +1,36 @@
+<div class="page-container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Relatórios</h1>
+      <p class="page-subtitle">Análise financeira detalhada</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" (click)="exportCsv()">📥 CSV</button>
+      <button class="btn btn-secondary btn-sm" (click)="exportPdf()">📄 PDF</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:var(--space-lg);display:flex;gap:var(--space-md)">
+    <input type="month" class="form-input" [(ngModel)]="month" (change)="load()" style="max-width:200px">
+  </div>
+
+  <div class="grid grid-3" style="margin-bottom:var(--space-lg)">
+    <div class="card s-card"><div class="s-label">Receitas</div><div class="s-val income">{{ formatCurrency(summary.income || 0) }}</div></div>
+    <div class="card s-card"><div class="s-label">Despesas</div><div class="s-val expense">{{ formatCurrency(summary.expense || 0) }}</div></div>
+    <div class="card s-card"><div class="s-label">Saldo</div><div class="s-val" [class.positive]="(summary.balance||0)>=0" [class.negative]="(summary.balance||0)<0">{{ formatCurrency(summary.balance || 0) }}</div></div>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title" style="margin-bottom:var(--space-md)">Despesas por Categoria</h2>
+    @for (item of categoryData; track item.name) {
+      @if (item.type === 'expense') {
+        <div class="cat-row">
+          <div class="cat-label"><span class="cat-dot" [style.background]="item.color"></span>{{ item.name }}</div>
+          <div class="cat-bar-wrap"><div class="cat-bar" [style.width.%]="getBarWidth(item.total)" [style.background]="item.color"></div></div>
+          <span class="cat-val">{{ formatCurrency(item.total) }}</span>
+        </div>
+      }
+    }
+    <div *ngIf="categoryData.length === 0" class="empty-state"><p class="empty-state-text">Sem dados</p></div>
+  </div>
+</div>

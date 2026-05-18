@@ -1,0 +1,13 @@
+.s-card { text-align: center; }
+.s-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-tertiary); font-weight: 600; }
+.s-val { font-family: var(--font-display); font-size: 24px; font-weight: 700; margin-top: var(--space-xs); }
+.income { color: var(--color-success); }
+.expense { color: var(--color-danger); }
+.positive { color: var(--color-success); }
+.negative { color: var(--color-danger); }
+.cat-row { display: flex; align-items: center; gap: var(--space-md); padding: 10px 0; border-bottom: 1px solid var(--color-border-light); &:last-child { border-bottom: none; } }
+.cat-label { display: flex; align-items: center; gap: var(--space-sm); min-width: 140px; font-size: 14px; font-weight: 500; }
+.cat-dot { width: 10px; height: 10px; border-radius: 50%; }
+.cat-bar-wrap { flex: 1; height: 8px; background: var(--color-bg-secondary); border-radius: 4px; overflow: hidden; }
+.cat-bar { height: 100%; border-radius: 4px; transition: width var(--transition-slow); }
+.cat-val { font-size: 14px; font-weight: 600; min-width: 100px; text-align: right; }

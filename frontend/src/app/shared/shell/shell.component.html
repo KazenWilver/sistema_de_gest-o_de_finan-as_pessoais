@@ -1,0 +1,54 @@
+<div class="shell" [class.sidebar-collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.mobile-open]="mobileMenuOpen">
+    <div class="sidebar-header">
+      <div class="logo" *ngIf="!sidebarCollapsed">
+        <span class="logo-icon">💰</span>
+        <span class="logo-text">SGFP</span>
+      </div>
+      <button class="btn-icon sidebar-toggle" (click)="toggleSidebar()">☰</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (item of navItems; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="nav-item theme-toggle" (click)="toggleTheme()">
+        <span class="nav-icon">{{ (themeService.theme$ | async) === 'dark' ? '☀️' : '🌙' }}</span>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">
+          {{ (themeService.theme$ | async) === 'dark' ? 'Modo Claro' : 'Modo Escuro' }}
+        </span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Mobile overlay -->
+  <div class="mobile-overlay" *ngIf="mobileMenuOpen" (click)="toggleMobile()"></div>
+
+  <!-- Main content -->
+  <div class="main-wrapper">
+    <!-- Header -->
+    <header class="header">
+      <button class="btn-icon mobile-menu-btn" (click)="toggleMobile()">☰</button>
+      <div class="header-spacer"></div>
+      <div class="header-right">
+        <div class="user-menu">
+          <div class="user-avatar">{{ userInitials }}</div>
+          <span class="user-name">{{ userName }}</span>
+          <button class="btn btn-ghost btn-sm" (click)="logout()">Sair</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="main-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
