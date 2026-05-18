@@ -1,0 +1,150 @@
+Com base na análise rigorosa do documento `Lab_4_Data_05_05_2026.pdf`, apresento a estruturação técnica e arquitetural para o **"Sistema de Gestão Financeira Pessoal"**.
+
+*Nota de Contexto Temporal:* Este projeto pertence ao **Segundo Conjunto** definido no documento. Observo que, de acordo com o calendário do laboratório, o prazo de entrega desta fase era **17 de maio de 2026**. Sendo hoje 18 de maio de 2026, assumo que estamos a realizar a entrega final (que inclui os repositórios, scripts e documento técnico) ou a finalizar atrasos documentados. O foco será máxima eficiência e cumprimento estrito dos critérios de avaliação.
+
+---
+
+### 1. Análise de Requisitos e Essência do Projeto
+
+A essência de um "Sistema de Gestão Financeira Pessoal" é permitir ao utilizador registar, categorizar e analisar as suas receitas e despesas.
+
+**Requisitos Obrigatórios Extraídos (Aplicados ao Contexto):**
+
+* **Stack:** Angular (Frontend), PHP puro (Backend), SQL relacional.
+* **Comunicação:** REST HTTP com JSON.
+* **Autenticação:** Registo, Login, Logout, Recuperação de senha (baseada em token guardado na BD).
+* **Base de Dados:** Mínimo de 3 tabelas e suporte a operações CRUD (foco nas transações financeiras).
+* **Integrações:** Pelo menos uma API Externa.
+* **Interface:** Responsiva, Light/Dark mode, Multi-idioma (mínimo PT e EN).
+* **Exportação:** Relatório financeiro em CSV ou PDF.
+* **Gestão de Acessos:** Admin vs. Utilizador Comum.
+
+---
+
+### 2. Estrutura de Base de Dados (SQL Relacional)
+
+Para cumprir o mínimo de três tabelas, garantir normalização (3FN) e suportar as funcionalidades financeiras e de permissões:
+
+1. **Tabela `users**` (Autenticação e Perfis)
+* `id` (PK, INT, Auto Increment)
+* `name` (VARCHAR)
+* `email` (VARCHAR, UNIQUE)
+* `password_hash` (VARCHAR)
+* `role` (ENUM: 'admin', 'user') -> *Cumpre a exigência de distinção de utilizadores.*
+* `reset_token` (VARCHAR, NULL)
+* `created_at` (TIMESTAMP)
+
+
+2. **Tabela `categories**` (Classificação de Transações)
+* `id` (PK, INT, Auto Increment)
+* `name` (VARCHAR, ex: "Alimentação", "Salário")
+* `type` (ENUM: 'income', 'expense')
+* `user_id` (FK, INT, NULL) -> *Se NULL, é uma categoria global do sistema. Se preenchido, é uma categoria personalizada criada pelo utilizador.*
+
+
+3. **Tabela `transactions**` (Operações CRUD Principais)
+* `id` (PK, INT, Auto Increment)
+* `user_id` (FK, INT) -> *Refere `users.id`.*
+* `category_id` (FK, INT) -> *Refere `categories.id`.*
+* `amount` (DECIMAL(10,2))
+* `description` (VARCHAR)
+* `transaction_date` (DATE)
+* `created_at` (TIMESTAMP)
+
+
+
+---
+
+### 3. Arquitetura do Backend (PHP Puro)
+
+Manteremos o padrão *Front Controller* para garantir um único ponto de entrada, separando rotas, controladores, modelos e serviços.
+
+**Organização de Diretórios (Backend):**
+
+```text
+/backend
+ ├── /config
+ │    └── database.php       # Conexão PDO (Singleton)
+ ├── /controllers            # Lógica de interface (Endpoints)
+ │    ├── AuthController.php
+ │    ├── TransactionController.php
+ │    ├── CategoryController.php
+ │    └── ExportController.php
+ ├── /models                 # Acesso a Dados
+ │    ├── User.php
+ │    ├── Category.php
+ │    └── Transaction.php
+ ├── /services               # Lógica pesada e Integrações
+ │    ├── CurrencyApiService.php # Chamadas à API de câmbio
+ │    └── ReportService.php      # Geração de CSV/PDF
+ ├── /core                   # Utilitários
+ │    ├── Router.php         # Roteamento
+ │    └── JwtAuth.php        # Validação de Tokens JWT
+ ├── .htaccess               # Redirecionamento para index.php
+ └── index.php               # Bootstrap
+
+```
+
+---
+
+### 4. Arquitetura do Frontend (Angular)
+
+O Frontend focará em dashboards visuais (para análise de gastos) e formulários de introdução de dados.
+
+**Organização de Diretórios (Frontend):**
+
+```text
+/frontend/src/app
+ ├── /core                   # Lógica Global e Segurança
+ │    ├── /guards            # AuthGuard, AdminGuard
+ │    ├── /interceptors      # JwtInterceptor
+ │    └── /services          # AuthService, ThemeService, I18nService
+ ├── /shared                 # Componentes de Interface Pura
+ │    ├── /components        # navbar, sidebar, modal, chart-widget
+ │    └── /pipes             # currency-formatter, translate
+ ├── /features               # Lógica de Negócio UI (Módulos)
+ │    ├── /auth              # login, register
+ │    ├── /dashboard         # Resumo financeiro (gráficos de despesas/receitas)
+ │    └── /transactions      # Tabela CRUD com filtros e adição de registos
+ ├── app-routing.module.ts
+ └── app.module.ts
+
+```
+
+**Navegação e Permissões:**
+
+* **User:** Dashboard (Resumo do mês), Transações (Lista, Adicionar, Editar, Eliminar), Exportar Relatório (PDF do mês).
+* **Admin:** Dashboard global do sistema (número de utilizadores ativos), Gestão de Categorias Globais.
+
+---
+
+### 5. Decisões Estratégicas: APIs, Scraping e IA
+
+**Qual API Externa Usar?**
+
+* **Abordagem Recomendada: ExchangeRate-API (ou Frankfurter API).**
+* *Justificação:* O documento exige uma API externa "quando aplicável". Num sistema financeiro, uma funcionalidade extremamente útil é a **Conversão de Moedas** (ex: o utilizador registou despesas em Kwanzas (AOA) e quer ver o equivalente em Dólares (USD) ou Euros (EUR) no seu dashboard). Estas APIs são gratuitas, não exigem autenticação complexa (Frankfurter é open-source e não requer chave) e respondem em JSON perfeito para o nosso `CurrencyApiService`.
+
+**Uso de Web Scraping:**
+
+* **Decisão: NÃO UTILIZAR.**
+* *Justificação:* Não há necessidade técnica de *scraping* neste projeto. As taxas de câmbio são melhor obtidas via REST API, garantindo robustez e conformidade com as boas práticas de Engenharia de Software.
+
+**Uso de Inteligência Artificial no Sistema:**
+
+* **Durante o Desenvolvimento:** Conforme o guião, uso obrigatório e crítico para auxiliar na estruturação e depuração do código.
+* **No Sistema Final (Funcionalidade Opcional de "Luxo"):** Se desejar adicionar valor extra para a avaliação, pode implementar um "Categorizador Inteligente". No frontend, quando o utilizador escreve "Comprei um hambúrguer no KFC" na descrição, o sistema envia a frase para a API da OpenAI/Gemini (via backend PHP), que devolve a categoria id ideal (ex: "Alimentação"). *Atenção: Apenas implemente isto se as funcionalidades base (CRUD, Autenticação, Exportação) estiverem 100% concluídas e isentas de bugs.*
+
+---
+
+### 6. Validação de Entrega (Checklist Lab_4)
+
+* [x] **Autenticação:** Completa (Registo, Login, Logout, Recuperação simulada via token).
+* [x] **Base de Dados:** Relacional (SQL), 3 tabelas (Users, Categories, Transactions), Operações CRUD ativas nas transações.
+* [x] **API Externa:** ExchangeRate-API para conversão de moeda no dashboard.
+* [x] **Interface:** Responsiva (Angular), Dark/Light Mode, Multi-idioma (PT/EN).
+* [x] **Exportação:** CSV ou PDF das transações filtradas por mês.
+* [x] **Distinção de Utilizadores:** 'Admin' gere categorias globais, 'User' gere as suas finanças.
+* [x] **Arquitetura Requerida:** Angular (Módulos/Componentes) + PHP Puro (Endpoints/JSON) + GitHub (Histórico).
+
+A estrutura encontra-se delineada para evidenciar a "qualidade estrutural, separação de responsabilidades, reutilização e modularidade" exigidas na página 2 do guião. Está pronta para ser implementada e documentada no relatório técnico final (máximo 5 páginas) que deve acompanhar a entrega.

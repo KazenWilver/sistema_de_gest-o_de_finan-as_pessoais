@@ -1,0 +1,338 @@
+================================================================================
+PLANO DEFINITIVO — Sistema de Gestão Financeira Pessoal (SGFP)
+Lab #04 · ISPTEC · Projeto integrado Angular + PHP puro + SQL
+Documento fusão de: plano1.txt, plano2.txt, plano3.txt (sem adicionar requisitos
+fora daquilo que os três textos conjuntamente sustentam ou completam logicalmente.)
+================================================================================
+
+CONVENÇÕES
+- [Lab]        = obrigatório segundo os três planos relativamente ao enunciado Lab #04.
+- [Decisão]    = convergência explícita dos planos ou escolha para resolver contradição.
+- [Opcional]   = melhoria coerente com o tema, explicitamente marcada como extra nos planos-fonte.
+
+
+--------------------------------------------------------------------------------
+1. VISÃO E OBJECTIVOS
+--------------------------------------------------------------------------------
+
+Visão do produto
+  Permitir ao utilizador registar, categorizar e analisar receitas e despesas,
+  com dashboards, relatórios e exportações, dentro de um tema de finanças
+  pessoais utilizável e com fluxo lógico estável.
+
+Objectivos estruturais prioritários do laboratório (transversal nos três planos)
+  - Organização de código, separação de responsabilidades, modularidade,
+    reutilização e manutenibilidade (principal critério junto ao funcionamento).
+  - IA como instrumento obrigatório de apoio ao desenvolvimento, com uso crítico
+    e compreensão do que é gerado (nunca substituir raciocínio técnico).
+  - Versionamento Git com histórico progressivo que evidencia autoria individual.
+
+Objectivos funcionais núcleo [Lab]
+  - Autenticação completa com recuperação de palavra-passe persistida na BD (token).
+  - CRUD em domínios centrais (transações em destaque nos três planos).
+  - ≥ 3 tabelas relacionais operacionais em conjunto com o modelo de dados.
+  - ≥ 1 integração externa adequada quando o tema assim o justifica [Lab].
+  - Interface responsiva; modo claro/escuro com alternância funcional persistente.
+  - Internacionalização mínima PT + EN.
+  - Exportação CSV e/ou PDF (os três preveem pelo menos CSV ou PDF; a fusão
+    assume possibilidade de oferecer ambos sem que isso extrapole o guião).
+
+
+--------------------------------------------------------------------------------
+2. ÂMBITO (O QUE ENTRA / O QUE FICA DE FORA)
+--------------------------------------------------------------------------------
+
+Escopo obrigatório alinhado ao Lab #04 [Lab]
+  Stack: Angular · PHP sem frameworks declarados · BD SQL · REST/HTTP JSON.
+  Requisitos técnicos do guião já listados na secção 1 (auth, BD, CRUD, API quando
+  aplicável, UI, tema, idiomas, export).
+
+Escopo de domínio (fusão pragmática)
+  - Presente nos três: transações, categorias, orçamentos, dashboard, relatórios,
+    configurações básicas, API de câmbio coerente com finanças pessoais (sem
+    criptomoedas como obrigatório de tema SGFP nos planos 1 e 2).
+  - Plano 2 estrutura além metas (“goals”), serviços de relatório agregados e
+    cache dedicado para taxas; incorporar como parte do modelo canónico desta fusão,
+    porque dá granularidade suficiente a CRUD/reporting sem fugir ao tema e cumpre
+    reforço avaliatório de uso de BD.
+  - Plano 3 propõe contas financeiras (accounts) ligadas às transações; incluir como
+    [Opcional tema-forte]: melhora narrativa das finanças pessoais mas não aparece como
+    tabela obrigatória nos planos 1 e 2. Equipa pode implementar apenas se conseguirem
+    manter igualmente o modelo canónico mínimo de tabelas e prazos.
+
+Fora do escopo por consenso implícito
+  - Scraping Web: decisão técnica unânime — não utilizar como fonte de dados nos três.
+  - Dependências frágeis ou “crypto scrapers”: plano 2 clarifica SGFP não exige esse eixo.
+
+
+--------------------------------------------------------------------------------
+3. REQUIREMENTOS NORMALIZADOS (CHECKLIST FUSÃO)
+--------------------------------------------------------------------------------
+
+[Gestão identidade]
+  Registo · Login · Logout · Recuperação de senha (token + campo de expiração
+  segundo plano 2 amplia o plano 1). Hash seguro das passwords (referência bcrypt
+  no plano 2).
+
+[Dados estruturais]
+  BD relacional SQL (MySQL no plano 2; planos 1 e 3 disserem “SQL relacional” genérico).
+  Normalização até 3FN conforme recomendações comuns aos três.
+  Scripts versionados (schema seed) referenciados no plano 2 e na estrutura plano 3.
+
+[Integração externa]
+  API de taxas de câmbio (Frankfurter / ExchangeRate-API citados nos planos 1 e 2).
+  Plano 3 impede afirmar “única melhor API” sem fonte actual — manter escolha documentada
+  com justificação académica (sem chave vs chave) e plano de fallback (cache local).
+
+[Frontend]
+  Módulos por feature, shared, core; guards; interceptors (JWT nos planos 1 e 2).
+  ngx-translate no plano 2 (coerente com “≥2 línguas”).
+  charting / widgets de resumo alinhados a dashboards (planos 1–3).
+
+[Export]
+  CSV nativo PHP; PDF com FPDF no plano 2 (preferido porque detalha entrega técnica).
+  Filtros temporais (ex.: período relatório) aparecem em todos.
+
+[Perfis utilizador — RESOLUÇÃO DE CONTRADIÇÃO]
+  Plano 1 e 2: distinção admin vs user conforme avaliação “condicional” do lab quando
+              justificado.
+  Plano 3: perfil único seria modelo minimalista possível dentro do mesmo condicional.
+
+  DECISÃO FUSÃO: Implementar papel admin/user (forte evidência textual em 1 e 2,
+  compatível com o condicional): admin acede apenas a vistas administrativas
+  limitadas—lista de utilizadores e estatísticas globais/agregadas (planos 1 e 2).
+  Perfis devem impedir fugas de dados entre utilizadores.
+  Gestão explícita de “categorias globais sistemas vs user-owned” apenas no plano 1;
+  o plano 2 modela categorias sempre por utilizador com seed inicial. Preferir modelo
+  do plano 2 (categories assentes a utilizador + seed no registo) por consistência
+  com migrações e FKs já detalhadas; papel admin focado em auditoria/overview, não na
+  manutenção de categorias globais. Se grupo quiser preservar 100% ideia plano 1,
+  documentar extensão opcional (tabela ou flag) sem quebrar restantes FKs.
+
+[IA no produto — RESOLUÇÃO DE CONTRADIÇÃO]
+  Plano 1: IA no desenvolvimento obrigatória; feature “categorizador luxo” opcional pós-core.
+  Plano 2: AIService Claude para insights texto (marcado como pressuposto explícito).
+  Plano 3: IA só extra opcional não dependente.
+
+  DECISÃO FUSÃO: Núcleo do sistema deve funcionar íntegro sem qualquer IA no runtime.
+               Qualquer recurso tipo insights ou categorização automática = [Opcional],
+               atrás de serviço modular removível (AIService conforme ideação plano 2 ou
+               alternativa plano 1), com chaves em variáveis de ambiente (.env).
+
+
+--------------------------------------------------------------------------------
+4. ARQUITECTURA GLOBAL
+--------------------------------------------------------------------------------
+
+Divide-se em frontend Angular consumindo API JSON servida por PHP “puro”.
+
+Backend (síntese camadas)
+  Entrada única (public/index.php front controller) + Router manual.
+  Camadas obrigatórias conceptuais: Controllers → Services → Repositories → Models/DTO.
+  Middleware: Auth JWT, eventual AdminMiddleware, Cors.
+  Helpers: Response JSON padronizada, Validator, JwtHelper.
+  Pasta database/ schema + seed (+ exports temporários onde plano 3 sugere storage).
+
+Frontend (síntese)
+  CoreModule (serviços globais, tema, idioma, storage, guards, interceptors).
+  SharedModule (UI reutilizável: navbar, sidebar, modal, confirm, tabelas, loaders).
+  Feature modules lazy: auth, dashboard, transactions, budgets, categories, reports,
+                       settings, (+ goals plano 2), (+ budgets já listado plano 3),
+                       (+ admin guarded), (+ accounts apenas se opcional adoptado).
+
+Padrões transversais de resposta APIs (tomado ao plano 2)
+{
+  "status": "success|error",
+  "data": ...,
+  "message": "...",
+  "errors": { "campo": "..." }
+}
+
+
+--------------------------------------------------------------------------------
+5. MODELAGEM CANÓNICA DE DADOS (PLANO BASE = PLANO 2 + ALINHAR PLANO 1/3 ONDE POSSÍVEL)
+--------------------------------------------------------------------------------
+
+Tabela users
+  Credenciais, role admin|user, preferências monetárias/idioma, tokens reset com expiração,
+  timestamps (ver campos definidos linha-planos plano 2 §3.2).
+
+Tabela categories
+  Por utilizador; tipo income|expense; icon/cor opcionais plano 2 (UI rica); campo
+  indicador categorias seeded.
+
+Tabela transactions
+  Pertence ao utilizador; tipo + montante em moeda registo + amount_base já convertido
+  para moeda “base” utilizador conforme CurrencyService plano 2; datas; vínculo categoria;
+  opcional expansão conta financeira FK (apenas se módulo accounts adoptado).
+
+Tabela budgets
+  Limites globais ou por categoria dentro de período (planos 2 e 3 alinham conceptualmente).
+
+Tabela goals
+  Metas de poupança com progresso contribuições — plano 2 (valor acrescentado ao relatório IA).
+
+Tabela currency_rates (cache)
+  Persistência de últimas taxas (par base/target, rate, fetched_at UNIQUE pair).
+
+TOTAL mínimo tabelas canónicas fusão (sem accounts): seis estruturas acima ⇒ cumpre e
+extrapola requisito “≥ 3”. Acrescentar apenas tabelas suplementares já nomeadas pelo
+plano 3 (password_reset separada, logs exportação) como micro-opcional se necessidade real
+surge e não dispersa entrega.
+
+
+--------------------------------------------------------------------------------
+6. COMPONENTES BACKEND-CHAVE & SERVIÇOS
+--------------------------------------------------------------------------------
+
+AuthService + JwtHelper HS256 manual (explicitado planos 1 e 2).
+TransactionService: validações de posse categorias · conversão monetária via CurrencyService
+· verificação orçamentos (onde existir política threshold >80%).
+BudgetService · GoalService · CategoryService conforme controllers listados plano 2.
+ReportService: summaries, by-category, trend.
+ExportService: CSV + PDF (FPDF cópia manual vendor sem obrigar Composer se política projeto o exige).
+CurrencyService + CurrencyRepository ↔ Frankfurter (ou ExchangeRate equivalente livre docs).
+AIService + AIController apenas [Opcional].
+
+
+--------------------------------------------------------------------------------
+7. SURFACE REST (ÍNDICE ESSENCIAL; DETALHAR NO CÓDIGO)
+--------------------------------------------------------------------------------
+
+/auth/* register login logout forgot reset me
+/transactions CRUD filtros período tipo categoria paginação
+/categories CRUD
+/budgets CRUD progress
+/goals CRUD contribute
+/reports summary by-category trend
+/export csv pdf (query período?)
+/currencies rates
+/dashboard agregações (alternativa agrupamento plano 3: vários GET dashboard/*)
+/settings profile update idioma moeda segurança
+/ai insights [Opcional]
+
+
+--------------------------------------------------------------------------------
+8. FRONTEND: EXPERIÊNCIA UTILIZADOR BÁSICA
+--------------------------------------------------------------------------------
+
+Landing autenticação GuestGuard ↔ AuthGuard shells.
+Dashboard: cards receitas/despesas/saldo; últimos movimentos; progress orçamentos; widget IA off por flag.
+Lista transações filtros ordenação modal confirmação delete.
+Charts (linha temporal, pizza categoria).
+Settings: tema (data-attribute root), língua ngx-translate, preferências monetárias.
+Layouts responsivos, estados empty, loaders/skeleton quando presente nos planos 2 e 3.
+Admin routing protegido: users + stats sistema.
+
+Funcionalidades [Opcional] adicionadas se tempo:
+  Insights IA texto (plano 2 fluxo já descrito curtamente).
+  Categorização automática por LLM texto livre descrição (plano 1).
+  Gestão Accounts (plano 3).
+  Logs exportações (plano 3).
+
+
+--------------------------------------------------------------------------------
+9. GIT, REPOSITORIO(S) E QUALIDADE DE PROCESSO
+--------------------------------------------------------------------------------
+
+Possível mono-repo (/frontend,/backend,/docs conforme plano 3 exemplificação) OU dual repo
+(sgfp-front / sgfp-back) segundo plano 2.
+Conventional commits (tipo scope): feat fix refactor docs chore.
+Branches: main (estável), develop integração contínua, feature branches.
+.gitignore obrigatórios cobrindo node_modules vendor .env artefactos gerados logs.
+
+Critérios de avaliação replicados (ordem próxima plano 2 §1.4 plano 3 §1):
+ funcionamento • qualidade funcional • organização código • BD/APIs • UI • autoria commits
+ • consistência versionamento.
+
+
+--------------------------------------------------------------------------------
+10. FASES / MARCO(s) EXECUTIVOS (SEM INVENTAR CRONO DETALHE ALÉM DO ESPECIFICADO NOS PLANOS)
+--------------------------------------------------------------------------------
+
+FASE A — Infraestrutura & segurança
+  Repositório(s), esqueltes Angular/PHP, BD schema base users/categories/transactions,
+  migrações/seed inicial, JWT auth completo, tema + i18n esqueleto.
+
+FASE B — Domínio financeiro núcleo
+  CRUD transações + filtros dashboards básicos, categorização, orçamentos, relatórios
+  sintéticos antes de integrações pesadas.
+
+FASE C — Integrações e camada relatório avançado
+  API câmbio + cache BD, summaries avançadas, charts, exportações CSV/PDF com cabeçalhos,
+  tratamento erro rede.
+
+FASE D — Refino admin, metas opcionais, extras isolados & hardening
+  Admin module, GOALS endpoints/UI, AIService gated, polishing UI acessível,
+  documentação técnica final.
+
+MARCO CONTEXTUAL mencionado no plano 1
+  Referência temporal entrega segundo conjunto 17/05/2026 (uso como lembrete de encerramento
+  oficial possivelmente já deslocado se calendário académico alterado).
+
+
+--------------------------------------------------------------------------------
+11. ARTEFACTOS DE ENTREGA FINAL
+--------------------------------------------------------------------------------
+
+[Lab] Fontes Angular + backend PHP públicos ou mono-repo estruturado.
+[Lab] Scripts SQL (schema.sql + seed.sql mínimos).
+Documento técnico ≤ 5 páginas abordando introdução/arquitectura/BD normalização/decisões
+APIs opcionais IA export/dificuldades (fusão pontos §10 checklist planos 2 e 1).
+
+
+--------------------------------------------------------------------------------
+12. GESTÃO DE RISCOS (EXTRAÍDOS E CONSOLIDADOS DOS TRÊS PLANOS)
+--------------------------------------------------------------------------------
+
+Risco: Disponibilidade / limites chamadas APIs externas câmbio (instabilidade, mudanças TOS).
+Mitigação: cache local com TTL · fallback degradado mostrando última taxa conhecida + aviso.
+
+Risco: Chaves API Claude / OpenAI Gemini se extras IA activados custo/overquota.
+Mitigação: feature flag OFF default · limites quotas documentados · mocks locais desenvolvimento.
+
+Risco: Expansão de escopo Accounts + Goals + IA simultâneo causa atrasos.
+Mitigação: priorizar sempre entrega núcleo verificável checklist Lab antes de opcionais.
+
+Risco: Inconsistência multi-moeda sem política clarify (tipo vs valores baseados).
+Mitigação: armazenar moeda utilizador como referência única relatórios (modelo amount_base).
+
+Risco: Scoping perfis dados—vazamentos cross-user.
+Mitigação: filtros sempre por user_id + testes segurança básicos.
+
+Risco: PDFs muito grandes / timeout PHP servidor partilhado.
+Mitigação: paginar export ou limitar janelas tempora grandes.
+
+
+--------------------------------------------------------------------------------
+13. TESTES & VERIFICAÇÃO (SEM IMPOSTOS DE STACK DE TEST AUTOMÁTICO NÃO CITADO)
+--------------------------------------------------------------------------------
+
+Checklist Manual Funcional cobrindo requisitos [Lab].
+Regressão rápida pós refactor camadas garantindo JSON contrato invariante campos obrig.
+Validação segurança: tentativas acesso recurso utilizador diferente ⇒ 401/403.
+Validação tema/idioma: toggles sobrevivem reload (localstorage / preferences).
+Stress leve filtros período grandes + export.
+Se IA opcional: teste comportamento modo offline (graciosamente indisponível).
+
+
+--------------------------------------------------------------------------------
+14. OBSERVABILIDADE & OPS LEVE (DERIVADO ESTRUTURA PLANO 3)
+--------------------------------------------------------------------------------
+
+Opcional registrar logs app em storage/logs (plano 3) sem tornar infra complexa.
+Exports temporários / limpeza periódica para não encher disco.
+
+
+--------------------------------------------------------------------------------
+15. LINHA FINAL DE AUTORIA
+--------------------------------------------------------------------------------
+
+Este plano fusiona obrigatoriedades do Lab #04 repetidas nos três ficheiros, adopta modelo
+detalhado maioritariamente conforme especificação extensa do plano 2 onde não conflitar com
+premissas absolutamente obrigatórias, corrige zonas divergentes (admin/categorias, IA produto),
+e incorpora elementos estruturais do plano 3 (contas/logs) unicamente etiquetados [Opcional]
+para expansão incremental controlada.
+
+
+FIM PLANO DEFINITIVO

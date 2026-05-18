@@ -1,0 +1,977 @@
+# Sistema de Gestão Financeira Pessoal (SGFP)
+## Especificação Técnica Completa — Lab #04 · ISPTEC · 2025/2026
+
+---
+
+## 1. ANÁLISE DO LAB_4
+
+### 1.1 Enquadramento
+O Lab #04 exige a construção de sistemas web com qualidade profissional, priorizando
+organização estrutural, separação de responsabilidades, manutenibilidade e evolução
+progressiva. O uso de IA é permitido **como instrumento de apoio ao desenvolvimento**,
+não como substituto do raciocínio técnico. O aluno deve compreender, validar e adaptar
+tudo o que é gerado.
+
+### 1.2 Requisitos Obrigatórios (extraídos diretamente do lab_4)
+
+| Requisito | Tipo | Aplicação ao SGFP |
+|---|---|---|
+| Autenticação completa (registo, login, logout, recuperação de senha) | Obrigatório | ✅ Implementar |
+| Base de dados relacional ≥ 3 tabelas com CRUD | Obrigatório | ✅ 6 tabelas planeadas |
+| Integração com ≥ 1 API externa (quando aplicável) | Obrigatório | ✅ API de câmbio |
+| Interface responsiva | Obrigatório | ✅ Angular + CSS responsivo |
+| Modo claro e modo escuro com alternância funcional | Obrigatório | ✅ ThemeService |
+| Suporte a múltiplos idiomas (mínimo 2) | Obrigatório | ✅ PT + EN via ngx-translate |
+| Exportação de dados ou relatórios (CSV ou PDF) | Obrigatório | ✅ CSV + PDF |
+| Distinção de tipos de utilizador + permissões diferenciadas | Condicional | ✅ Justificado (admin/user) |
+
+### 1.3 Stack Tecnológica Obrigatória
+- **Frontend**: Angular
+- **Backend**: PHP puro (sem frameworks)
+- **Base de dados**: SQL relacional (MySQL)
+- **Comunicação**: HTTP com respostas JSON
+
+### 1.4 Critérios de Avaliação
+1. Funcionamento dos sistemas
+2. Qualidade das funcionalidades
+3. Organização do código (principal critério)
+4. Uso adequado de base de dados e APIs
+5. Qualidade da interface
+6. Clareza da autoria individual (commits GitHub)
+7. Consistência do versionamento
+
+---
+
+## 2. DECISÕES TÉCNICAS E RESPOSTAS ÀS QUESTÕES
+
+### 2.1 Web Scraping para Criptomoedas
+**[NÃO APLICÁVEL]** — O lab_4 não menciona web scraping em nenhum ponto.
+O requisito de integração externa refere-se a **API externa**. O "Sistema de
+Monitoramento de Criptomoedas" é um sistema **separado** do primeiro conjunto.
+O SGFP não tem relação direta com criptomoedas. Usar web scraping introduziria
+dependência frágil, risco legal e complexidade desnecessária não sustentada pelo lab.
+→ **Decisão**: usar API de taxas de câmbio para conversão de moedas, que é
+diretamente relevante para gestão financeira pessoal.
+
+### 2.2 Uso de Inteligência Artificial no Sistema
+O lab_4 usa IA como **ferramenta de desenvolvimento** (assistente de código),
+não exige funcionalidades de IA no produto final. Contudo, **não proíbe** features de IA.
+
+**[PRESSUPOSTO EXPLÍCITO]**: Será adicionada uma funcionalidade de IA opcional
+(análise de padrões financeiros) utilizando a **API do Claude (Anthropic)** no backend
+PHP. Esta funcionalidade enriquece o sistema sem violar nenhuma diretriz do lab.
+- O backend envia o resumo financeiro do utilizador para a API Claude
+- A resposta retorna insights/recomendações em linguagem natural
+- Feature isolada num `AIService.php` — removível sem impacto no resto do sistema
+
+### 2.3 APIs Externas Selecionadas
+
+| API | Uso | Plano | Chave? |
+|---|---|---|---|
+| **Frankfurter.app** | Taxas de câmbio em tempo real | 100% gratuito, open-source | Não |
+| **ngx-translate** | i18n Angular (biblioteca, não API) | Open-source | N/A |
+| **Claude API (Anthropic)** | Insights financeiros via IA | Free tier disponível | Sim |
+
+**Justificação do Frankfurter.app**: sem registo, sem chave, sem limites documentados,
+mantido pelo BCE (European Central Bank), retorna JSON limpo. Ideal para ambiente
+académico. URL: `https://api.frankfurter.app/latest?from=USD&to=AOA,EUR`
+
+**Justificação da Claude API**: plan gratuito com créditos iniciais suficientes para
+um projeto académico. Alternativa reversível: desativar o `AIService` e o feature
+permanece latente sem quebrar o sistema.
+
+### 2.4 Exportação de Dados
+- **CSV**: gerado no backend PHP nativamente (sem biblioteca)
+- **PDF**: gerado no backend com **FPDF** (biblioteca PHP gratuita, zero dependências externas)
+- Ambos os formatos expostos via endpoints dedicados com cabeçalhos HTTP corretos
+
+---
+
+## 3. BASE DE DADOS
+
+### 3.1 Diagrama de Entidades e Relacionamentos
+
+```
+users ──< transactions
+users ──< categories
+users ──< budgets
+users ──< goals
+categories ──< transactions
+categories ──< budgets
+currency_rates (tabela de cache independente)
+```
+
+### 3.2 Definição das Tabelas (SQL — MySQL)
+
+```sql
+-- ============================================================
+-- TABELA: users
+-- ============================================================
+CREATE TABLE users (
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name          VARCHAR(100)  NOT NULL,
+    email         VARCHAR(150)  NOT NULL UNIQUE,
+    password      VARCHAR(255)  NOT NULL,               -- bcrypt
+    role          ENUM('admin','user') NOT NULL DEFAULT 'user',
+    currency      VARCHAR(10)   NOT NULL DEFAULT 'AOA',
+    language      VARCHAR(5)    NOT NULL DEFAULT 'pt',
+    reset_token   VARCHAR(255)  NULL,
+    token_expires DATETIME      NULL,
+    created_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- TABELA: categories
+-- ============================================================
+CREATE TABLE categories (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NOT NULL,
+    name       VARCHAR(100) NOT NULL,
+    type       ENUM('income','expense') NOT NULL,
+    icon       VARCHAR(60)  NOT NULL DEFAULT 'circle',
+    color      VARCHAR(7)   NOT NULL DEFAULT '#6366f1',
+    is_default TINYINT(1)   NOT NULL DEFAULT 0,
+    created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cat_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- TABELA: transactions
+-- ============================================================
+CREATE TABLE transactions (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT UNSIGNED   NOT NULL,
+    category_id INT UNSIGNED   NOT NULL,
+    type        ENUM('income','expense') NOT NULL,
+    amount      DECIMAL(15,2)  NOT NULL,
+    currency    VARCHAR(10)    NOT NULL DEFAULT 'AOA',
+    amount_base DECIMAL(15,2)  NOT NULL,               -- valor na moeda base do utilizador
+    description VARCHAR(255)   NOT NULL,
+    date        DATE           NOT NULL,
+    notes       TEXT           NULL,
+    created_at  TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_tx_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_tx_cat FOREIGN KEY (category_id)
+        REFERENCES categories(id) ON DELETE RESTRICT
+);
+
+-- ============================================================
+-- TABELA: budgets
+-- ============================================================
+CREATE TABLE budgets (
+    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT UNSIGNED   NOT NULL,
+    category_id INT UNSIGNED   NULL,                   -- NULL = orçamento global
+    name        VARCHAR(100)   NOT NULL,
+    amount      DECIMAL(15,2)  NOT NULL,
+    period      ENUM('weekly','monthly','yearly') NOT NULL DEFAULT 'monthly',
+    start_date  DATE           NOT NULL,
+    end_date    DATE           NOT NULL,
+    created_at  TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_bud_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_bud_cat FOREIGN KEY (category_id)
+        REFERENCES categories(id) ON DELETE SET NULL
+);
+
+-- ============================================================
+-- TABELA: goals
+-- ============================================================
+CREATE TABLE goals (
+    id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id        INT UNSIGNED   NOT NULL,
+    name           VARCHAR(100)   NOT NULL,
+    target_amount  DECIMAL(15,2)  NOT NULL,
+    current_amount DECIMAL(15,2)  NOT NULL DEFAULT 0.00,
+    deadline       DATE           NULL,
+    status         ENUM('active','completed','cancelled') NOT NULL DEFAULT 'active',
+    created_at     TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_goal_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- TABELA: currency_rates (cache de taxas de câmbio)
+-- ============================================================
+CREATE TABLE currency_rates (
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    base_currency   VARCHAR(10)    NOT NULL,
+    target_currency VARCHAR(10)    NOT NULL,
+    rate            DECIMAL(20,6)  NOT NULL,
+    fetched_at      TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_pair (base_currency, target_currency)
+);
+```
+
+### 3.3 Normalização
+- **1NF**: todos os campos são atómicos, sem grupos repetitivos
+- **2NF**: todas as colunas dependem da chave primária completa
+- **3NF**: sem dependências transitivas (ex.: `currency` em `transactions` é dado
+  da transação, não derivado de outra tabela não-chave)
+- `currency_rates` serve apenas de cache com TTL gerido no `CurrencyService.php`
+
+### 3.4 Dados Iniciais (Seed)
+```sql
+-- Categorias padrão inseridas após criação de um novo utilizador (via trigger ou service)
+INSERT INTO categories (user_id, name, type, icon, color, is_default) VALUES
+(?, 'Salário',       'income',  'wallet',      '#10b981', 1),
+(?, 'Freelance',     'income',  'laptop',       '#06b6d4', 1),
+(?, 'Alimentação',   'expense', 'utensils',     '#f59e0b', 1),
+(?, 'Transporte',    'expense', 'car',          '#ef4444', 1),
+(?, 'Saúde',         'expense', 'heart-pulse',  '#8b5cf6', 1),
+(?, 'Educação',      'expense', 'book-open',    '#3b82f6', 1),
+(?, 'Lazer',         'expense', 'gamepad-2',    '#ec4899', 1),
+(?, 'Outros',        'expense', 'circle-dots',  '#6b7280', 1);
+```
+
+---
+
+## 4. ESTRUTURA DO BACKEND (PHP Puro)
+
+### 4.1 Organização de Pastas
+
+```
+sgfp-backend/
+│
+├── public/
+│   └── index.php                  # Único ponto de entrada; router central
+│
+├── src/
+│   ├── Config/
+│   │   ├── Database.php           # Singleton PDO — uma conexão por request
+│   │   └── Config.php             # Constantes: DB, JWT_SECRET, API_KEYS
+│   │
+│   ├── Controllers/               # THIN — recebe request, chama service, devolve JSON
+│   │   ├── AuthController.php
+│   │   ├── TransactionController.php
+│   │   ├── CategoryController.php
+│   │   ├── BudgetController.php
+│   │   ├── GoalController.php
+│   │   ├── ReportController.php
+│   │   ├── ExportController.php
+│   │   ├── CurrencyController.php
+│   │   └── AIController.php
+│   │
+│   ├── Services/                  # BUSINESS LOGIC — regras, cálculos, orquestração
+│   │   ├── AuthService.php
+│   │   ├── TransactionService.php
+│   │   ├── CategoryService.php
+│   │   ├── BudgetService.php
+│   │   ├── GoalService.php
+│   │   ├── ReportService.php
+│   │   ├── ExportService.php      # Gera CSV e PDF (usa FPDF)
+│   │   ├── CurrencyService.php    # Chama Frankfurter, atualiza cache, converte
+│   │   └── AIService.php          # Chama API Claude, constrói prompt, retorna insight
+│   │
+│   ├── Repositories/              # DATA ACCESS — queries SQL isoladas aqui
+│   │   ├── UserRepository.php
+│   │   ├── TransactionRepository.php
+│   │   ├── CategoryRepository.php
+│   │   ├── BudgetRepository.php
+│   │   ├── GoalRepository.php
+│   │   └── CurrencyRepository.php
+│   │
+│   ├── Models/                    # DTOs / entidades simples (arrays associativos ou classes)
+│   │   ├── User.php
+│   │   ├── Transaction.php
+│   │   ├── Category.php
+│   │   ├── Budget.php
+│   │   └── Goal.php
+│   │
+│   ├── Middleware/
+│   │   ├── AuthMiddleware.php      # Valida JWT; injeta $userId na request
+│   │   ├── AdminMiddleware.php     # Verifica role='admin'
+│   │   └── CorsMiddleware.php      # Headers CORS para Angular dev server
+│   │
+│   └── Helpers/
+│       ├── Response.php            # json_response(data, code), json_error(msg, code)
+│       ├── Validator.php           # Validação de inputs
+│       └── JwtHelper.php           # Encode/decode JWT (implementação manual HS256)
+│
+├── vendor/                        # FPDF (copiado manualmente, sem Composer obrigatório)
+│   └── fpdf/
+│       └── fpdf.php
+│
+├── .htaccess                      # Redireciona tudo para public/index.php
+├── .env.example                   # Template de variáveis de ambiente
+└── database/
+    ├── schema.sql                 # Script de criação das tabelas
+    └── seed.sql                   # Dados iniciais (categorias padrão)
+```
+
+### 4.2 Router Central (public/index.php)
+
+```php
+<?php
+// public/index.php — Router central
+
+require_once __DIR__ . '/../src/Helpers/Response.php';
+require_once __DIR__ . '/../src/Middleware/CorsMiddleware.php';
+
+CorsMiddleware::handle();
+
+$method = $_SERVER['REQUEST_METHOD'];
+$uri    = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$uri    = rtrim($uri, '/');
+$parts  = explode('/', ltrim($uri, '/'));
+// Ex: ['api', 'transactions', '5']
+
+// Mapa de rotas: [METHOD][pattern] => [Controller, action]
+// Cada controller é carregado apenas quando necessário (lazy load manual)
+
+$routes = [
+    'POST'   => [
+        'api/auth/register'          => ['AuthController',        'register'],
+        'api/auth/login'             => ['AuthController',        'login'],
+        'api/auth/logout'            => ['AuthController',        'logout'],
+        'api/auth/forgot-password'   => ['AuthController',        'forgotPassword'],
+        'api/auth/reset-password'    => ['AuthController',        'resetPassword'],
+        'api/transactions'           => ['TransactionController', 'store'],
+        'api/categories'             => ['CategoryController',    'store'],
+        'api/budgets'                => ['BudgetController',      'store'],
+        'api/goals'                  => ['GoalController',        'store'],
+        'api/goals/:id/contribute'   => ['GoalController',        'contribute'],
+        'api/ai/insights'            => ['AIController',          'getInsights'],
+    ],
+    'GET'    => [
+        'api/auth/me'                => ['AuthController',        'me'],
+        'api/transactions'           => ['TransactionController', 'index'],
+        'api/transactions/:id'       => ['TransactionController', 'show'],
+        'api/categories'             => ['CategoryController',    'index'],
+        'api/budgets'                => ['BudgetController',      'index'],
+        'api/budgets/:id/progress'   => ['BudgetController',      'progress'],
+        'api/goals'                  => ['GoalController',        'index'],
+        'api/reports/summary'        => ['ReportController',      'summary'],
+        'api/reports/by-category'    => ['ReportController',      'byCategory'],
+        'api/reports/trend'          => ['ReportController',      'trend'],
+        'api/export/csv'             => ['ExportController',      'exportCsv'],
+        'api/export/pdf'             => ['ExportController',      'exportPdf'],
+        'api/currencies/rates'       => ['CurrencyController',    'rates'],
+    ],
+    'PUT'    => [
+        'api/transactions/:id'       => ['TransactionController', 'update'],
+        'api/categories/:id'         => ['CategoryController',    'update'],
+        'api/budgets/:id'            => ['BudgetController',      'update'],
+        'api/goals/:id'              => ['GoalController',        'update'],
+        'api/settings/profile'       => ['AuthController',        'updateProfile'],
+    ],
+    'DELETE' => [
+        'api/transactions/:id'       => ['TransactionController', 'destroy'],
+        'api/categories/:id'         => ['CategoryController',    'destroy'],
+        'api/budgets/:id'            => ['BudgetController',      'destroy'],
+        'api/goals/:id'              => ['GoalController',        'destroy'],
+    ],
+];
+
+// Resolução de rota + extração de :id dinâmico
+// [lógica de dispatch aqui]
+```
+
+### 4.3 Separação de Responsabilidades — Exemplo Concreto
+
+```
+Request POST /api/transactions
+      │
+      ▼
+AuthMiddleware::handle()          ← valida JWT, extrai user_id
+      │
+      ▼
+TransactionController::store()    ← recebe JSON, valida formato básico
+      │
+      ▼
+TransactionService::create()      ← aplica regras de negócio:
+                                     · confirmar que category pertence ao user
+                                     · converter amount para moeda base via CurrencyService
+                                     · verificar se excede budget ativo
+      │
+      ▼
+TransactionRepository::insert()   ← executa INSERT com PDO prepared statement
+      │
+      ▼
+Response::json(['id' => $id], 201)
+```
+
+---
+
+## 5. ESTRUTURA DO FRONTEND (Angular)
+
+### 5.1 Organização de Pastas
+
+```
+sgfp-frontend/
+│
+├── src/
+│   ├── app/
+│   │   │
+│   │   ├── core/                           # Módulo singleton — importado 1x no AppModule
+│   │   │   ├── guards/
+│   │   │   │   ├── auth.guard.ts           # Redireciona para /auth/login se não autenticado
+│   │   │   │   └── guest.guard.ts          # Redireciona para /dashboard se já autenticado
+│   │   │   ├── interceptors/
+│   │   │   │   ├── auth.interceptor.ts     # Injeta Bearer token em todas as requests
+│   │   │   │   └── error.interceptor.ts    # Trata 401 (logout), 500, erros de rede
+│   │   │   ├── services/
+│   │   │   │   ├── auth.service.ts         # login(), logout(), isAuthenticated(), currentUser$
+│   │   │   │   ├── theme.service.ts        # toggleTheme(), theme$ (light|dark), persiste em LS
+│   │   │   │   ├── language.service.ts     # setLanguage(), currentLang$, integra ngx-translate
+│   │   │   │   └── storage.service.ts      # Wrapper tipado do localStorage
+│   │   │   └── core.module.ts
+│   │   │
+│   │   ├── shared/                         # Componentes, pipes e diretivas reutilizáveis
+│   │   │   ├── components/
+│   │   │   │   ├── navbar/                 # Top bar: logo, user menu, tema, idioma
+│   │   │   │   ├── sidebar/                # Navegação lateral (lazy, colapsável)
+│   │   │   │   ├── stat-card/              # Cartão reutilizável: valor + título + ícone + tendência
+│   │   │   │   ├── chart-wrapper/          # Wrapper de Chart.js com loading/error states
+│   │   │   │   ├── data-table/             # Tabela com sort, paginação, filtros
+│   │   │   │   ├── modal/                  # Modal genérico com ng-content
+│   │   │   │   ├── confirm-dialog/         # Dialog de confirmação de ações destrutivas
+│   │   │   │   ├── empty-state/            # Estado vazio ilustrado
+│   │   │   │   ├── badge/                  # Badge de categoria/tipo com cor dinâmica
+│   │   │   │   └── skeleton-loader/        # Loading skeleton para listas e cards
+│   │   │   ├── pipes/
+│   │   │   │   ├── currency-format.pipe.ts # Formata valores na moeda do utilizador
+│   │   │   │   └── relative-date.pipe.ts   # "Há 2 dias", "Ontem"
+│   │   │   ├── directives/
+│   │   │   │   └── click-outside.directive.ts
+│   │   │   └── shared.module.ts
+│   │   │
+│   │   ├── features/                       # Um módulo por domínio funcional (lazy loading)
+│   │   │   │
+│   │   │   ├── auth/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── login/
+│   │   │   │   │   │   ├── login.component.ts
+│   │   │   │   │   │   ├── login.component.html
+│   │   │   │   │   │   └── login.component.scss
+│   │   │   │   │   ├── register/
+│   │   │   │   │   └── forgot-password/
+│   │   │   │   └── auth.module.ts
+│   │   │   │
+│   │   │   ├── dashboard/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── dashboard.component.ts   # Orquestra widgets
+│   │   │   │   │   ├── summary-widget/           # Total receitas/despesas/saldo
+│   │   │   │   │   ├── recent-transactions/      # Últimas 5 transações
+│   │   │   │   │   ├── budget-progress/          # Barras de progresso dos orçamentos
+│   │   │   │   │   └── ai-insight-widget/        # Card com insight gerado por IA
+│   │   │   │   ├── services/
+│   │   │   │   │   └── dashboard.service.ts
+│   │   │   │   └── dashboard.module.ts
+│   │   │   │
+│   │   │   ├── transactions/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── transaction-list/
+│   │   │   │   │   ├── transaction-form/         # Criar e editar (mesmo componente)
+│   │   │   │   │   └── transaction-filter/       # Filtros: data, categoria, tipo, valor
+│   │   │   │   ├── models/
+│   │   │   │   │   └── transaction.model.ts
+│   │   │   │   ├── services/
+│   │   │   │   │   └── transaction.service.ts
+│   │   │   │   └── transactions.module.ts
+│   │   │   │
+│   │   │   ├── budgets/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── budget-list/
+│   │   │   │   │   ├── budget-form/
+│   │   │   │   │   └── budget-progress-bar/      # Componente reutilizável
+│   │   │   │   ├── models/
+│   │   │   │   ├── services/
+│   │   │   │   └── budgets.module.ts
+│   │   │   │
+│   │   │   ├── goals/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── goal-list/
+│   │   │   │   │   ├── goal-form/
+│   │   │   │   │   └── goal-contribute-modal/
+│   │   │   │   ├── models/
+│   │   │   │   ├── services/
+│   │   │   │   └── goals.module.ts
+│   │   │   │
+│   │   │   ├── categories/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── category-list/
+│   │   │   │   │   └── category-form/
+│   │   │   │   ├── services/
+│   │   │   │   └── categories.module.ts
+│   │   │   │
+│   │   │   ├── reports/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── reports.component.ts
+│   │   │   │   │   ├── monthly-chart/            # Chart.js: receitas vs despesas por mês
+│   │   │   │   │   ├── category-pie/             # Gráfico de pizza por categoria
+│   │   │   │   │   └── export-panel/             # Botões CSV e PDF com filtros de data
+│   │   │   │   ├── services/
+│   │   │   │   └── reports.module.ts
+│   │   │   │
+│   │   │   ├── settings/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── profile-form/
+│   │   │   │   │   ├── security-form/            # Alterar password
+│   │   │   │   │   └── preferences-form/         # Moeda, idioma, tema
+│   │   │   │   └── settings.module.ts
+│   │   │   │
+│   │   │   └── admin/                            # Módulo exclusivo role=admin
+│   │   │       ├── components/
+│   │   │       │   ├── user-list/
+│   │   │       │   └── system-stats/
+│   │   │       ├── guards/
+│   │   │       │   └── admin.guard.ts
+│   │   │       └── admin.module.ts
+│   │   │
+│   │   ├── app-routing.module.ts
+│   │   ├── app.component.ts
+│   │   ├── app.component.html
+│   │   └── app.module.ts
+│   │
+│   ├── assets/
+│   │   ├── i18n/
+│   │   │   ├── pt.json                    # Português (língua padrão)
+│   │   │   └── en.json                    # English
+│   │   └── icons/                         # SVG icons (lucide ou heroicons)
+│   │
+│   ├── environments/
+│   │   ├── environment.ts                 # API_URL local, debug=true
+│   │   └── environment.prod.ts            # API_URL produção, debug=false
+│   │
+│   └── styles/
+│       ├── _variables.scss                # CSS custom properties e Sass vars
+│       ├── _themes.scss                   # :root[data-theme="dark"] { ... }
+│       ├── _typography.scss
+│       ├── _utilities.scss
+│       └── styles.scss                    # Imports globais
+```
+
+### 5.2 Sistema de Navegação (Angular Router)
+
+```typescript
+// app-routing.module.ts
+
+const routes: Routes = [
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+
+  // Rotas públicas
+  {
+    path: 'auth',
+    loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule),
+    canActivate: [GuestGuard]         // redireciona se já autenticado
+  },
+
+  // Layout autenticado (shell component com navbar + sidebar)
+  {
+    path: '',
+    component: ShellComponent,
+    canActivate: [AuthGuard],
+    children: [
+      {
+        path: 'dashboard',
+        loadChildren: () => import('./features/dashboard/dashboard.module').then(m => m.DashboardModule)
+      },
+      {
+        path: 'transactions',
+        loadChildren: () => import('./features/transactions/transactions.module').then(m => m.TransactionsModule)
+      },
+      {
+        path: 'budgets',
+        loadChildren: () => import('./features/budgets/budgets.module').then(m => m.BudgetsModule)
+      },
+      {
+        path: 'goals',
+        loadChildren: () => import('./features/goals/goals.module').then(m => m.GoalsModule)
+      },
+      {
+        path: 'categories',
+        loadChildren: () => import('./features/categories/categories.module').then(m => m.CategoriesModule)
+      },
+      {
+        path: 'reports',
+        loadChildren: () => import('./features/reports/reports.module').then(m => m.ReportsModule)
+      },
+      {
+        path: 'settings',
+        loadChildren: () => import('./features/settings/settings.module').then(m => m.SettingsModule)
+      },
+      {
+        path: 'admin',
+        loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule),
+        canActivate: [AdminGuard]
+      },
+    ]
+  },
+
+  { path: '**', redirectTo: '/dashboard' }
+];
+```
+
+**Rotas internas de cada módulo:**
+
+| Módulo | Rota | Componente |
+|---|---|---|
+| auth | /auth/login | LoginComponent |
+| auth | /auth/register | RegisterComponent |
+| auth | /auth/forgot-password | ForgotPasswordComponent |
+| auth | /auth/reset-password | ResetPasswordComponent |
+| dashboard | /dashboard | DashboardComponent |
+| transactions | /transactions | TransactionListComponent |
+| transactions | /transactions/new | TransactionFormComponent |
+| transactions | /transactions/:id/edit | TransactionFormComponent |
+| budgets | /budgets | BudgetListComponent |
+| goals | /goals | GoalListComponent |
+| categories | /categories | CategoryListComponent |
+| reports | /reports | ReportsComponent |
+| settings | /settings/profile | ProfileFormComponent |
+| settings | /settings/security | SecurityFormComponent |
+| settings | /settings/preferences | PreferencesFormComponent |
+| admin | /admin/users | UserListComponent |
+
+### 5.3 Serviços Angular — Padrão de Implementação
+
+```typescript
+// features/transactions/services/transaction.service.ts
+
+@Injectable({ providedIn: 'root' })
+export class TransactionService {
+  private readonly endpoint = `${environment.apiUrl}/transactions`;
+  private transactions$ = new BehaviorSubject<Transaction[]>([]);
+
+  constructor(private http: HttpClient) {}
+
+  getAll(filters?: TransactionFilter): Observable<Transaction[]> {
+    const params = this.buildParams(filters);
+    return this.http.get<ApiResponse<Transaction[]>>(this.endpoint, { params })
+      .pipe(
+        map(res => res.data),
+        tap(data => this.transactions$.next(data))
+      );
+  }
+
+  create(payload: CreateTransactionDto): Observable<Transaction> {
+    return this.http.post<ApiResponse<Transaction>>(this.endpoint, payload)
+      .pipe(map(res => res.data));
+  }
+
+  update(id: number, payload: Partial<CreateTransactionDto>): Observable<Transaction> {
+    return this.http.put<ApiResponse<Transaction>>(`${this.endpoint}/${id}`, payload)
+      .pipe(map(res => res.data));
+  }
+
+  remove(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.endpoint}/${id}`);
+  }
+
+  private buildParams(filters?: TransactionFilter): HttpParams { /* ... */ }
+}
+```
+
+### 5.4 Modo Claro/Escuro
+
+```typescript
+// core/services/theme.service.ts
+@Injectable({ providedIn: 'root' })
+export class ThemeService {
+  private theme$ = new BehaviorSubject<'light' | 'dark'>('light');
+
+  constructor(private storage: StorageService) {
+    const saved = this.storage.get('theme') ?? 'light';
+    this.apply(saved as 'light' | 'dark');
+  }
+
+  toggle(): void {
+    const next = this.theme$.value === 'light' ? 'dark' : 'light';
+    this.apply(next);
+  }
+
+  private apply(theme: 'light' | 'dark'): void {
+    document.documentElement.setAttribute('data-theme', theme);
+    this.storage.set('theme', theme);
+    this.theme$.next(theme);
+  }
+}
+```
+
+```scss
+// styles/_themes.scss
+:root {
+  --bg-primary:   #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #0f172a;
+  --border:       #e2e8f0;
+  --accent:       #6366f1;
+}
+
+:root[data-theme="dark"] {
+  --bg-primary:   #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f1f5f9;
+  --border:       #334155;
+  --accent:       #818cf8;
+}
+```
+
+### 5.5 Internacionalização (i18n)
+
+**Biblioteca**: `ngx-translate/core` + `ngx-translate/http-loader`
+
+```json
+// assets/i18n/pt.json (excerto)
+{
+  "nav": {
+    "dashboard":    "Painel",
+    "transactions": "Transações",
+    "budgets":      "Orçamentos",
+    "goals":        "Metas",
+    "reports":      "Relatórios",
+    "settings":     "Configurações"
+  },
+  "transaction": {
+    "income":  "Receita",
+    "expense": "Despesa",
+    "add":     "Nova Transação"
+  }
+}
+```
+
+```json
+// assets/i18n/en.json (excerto)
+{
+  "nav": {
+    "dashboard":    "Dashboard",
+    "transactions": "Transactions",
+    "budgets":      "Budgets",
+    "goals":        "Goals",
+    "reports":      "Reports",
+    "settings":     "Settings"
+  },
+  "transaction": {
+    "income":  "Income",
+    "expense": "Expense",
+    "add":     "New Transaction"
+  }
+}
+```
+
+---
+
+## 6. ENDPOINTS REST — REFERÊNCIA COMPLETA
+
+### Convenção de Resposta JSON
+```json
+// Sucesso
+{ "status": "success", "data": { ... }, "message": "..." }
+
+// Erro
+{ "status": "error", "message": "...", "errors": { "field": "..." } }
+```
+
+### Autenticação
+| Método | Endpoint | Auth? | Body | Resposta |
+|---|---|---|---|---|
+| POST | /api/auth/register | ❌ | name, email, password | user + token |
+| POST | /api/auth/login | ❌ | email, password | user + token |
+| POST | /api/auth/logout | ✅ | — | message |
+| POST | /api/auth/forgot-password | ❌ | email | message |
+| POST | /api/auth/reset-password | ❌ | token, password | message |
+| GET  | /api/auth/me | ✅ | — | user |
+| PUT  | /api/settings/profile | ✅ | name, currency, language | user |
+
+### Transações
+| Método | Endpoint | Query Params |
+|---|---|---|
+| GET | /api/transactions | ?type=income&category_id=1&from=2025-01-01&to=2025-12-31&page=1&limit=20 |
+| POST | /api/transactions | — |
+| GET | /api/transactions/:id | — |
+| PUT | /api/transactions/:id | — |
+| DELETE | /api/transactions/:id | — |
+
+### Orçamentos
+| Método | Endpoint | Nota |
+|---|---|---|
+| GET | /api/budgets | Inclui valor gasto atual |
+| POST | /api/budgets | — |
+| PUT | /api/budgets/:id | — |
+| DELETE | /api/budgets/:id | — |
+| GET | /api/budgets/:id/progress | % usado, valor restante |
+
+### Relatórios e Exportação
+| Método | Endpoint | Query Params |
+|---|---|---|
+| GET | /api/reports/summary | ?month=2025-06 |
+| GET | /api/reports/by-category | ?from=&to= |
+| GET | /api/reports/trend | ?months=6 |
+| GET | /api/export/csv | ?from=&to=&type= |
+| GET | /api/export/pdf | ?from=&to= |
+| GET | /api/currencies/rates | ?base=AOA |
+| POST | /api/ai/insights | body: summary financeiro |
+
+---
+
+## 7. FUNCIONALIDADES DO SISTEMA
+
+### 7.1 Autenticação
+- Registo com validação de email único
+- Login com JWT (expiração configurável, ex: 7 dias)
+- Logout (token invalidado no frontend; opcional: blacklist no backend)
+- Recuperação de senha via link com token temporário (armazenado em BD)
+
+### 7.2 Dashboard
+- Saldo atual (soma receitas − despesas do mês corrente)
+- Cards: Total Receitas / Total Despesas / Poupança do mês
+- Lista das últimas 5 transações
+- Progress bars dos orçamentos ativos
+- Widget de insight IA (resumo textual da saúde financeira)
+
+### 7.3 Transações
+- CRUD completo com validação no frontend e backend
+- Filtros: período, tipo (receita/despesa), categoria
+- Paginação server-side
+- Ordenação por data, valor, categoria
+
+### 7.4 Orçamentos
+- Definição de limite por categoria ou global
+- Período: semanal / mensal / anual
+- Indicador visual de progresso (cor muda: verde → amarelo → vermelho)
+- Alerta quando > 80% consumido
+
+### 7.5 Metas de Poupança
+- Criar meta com valor-alvo e prazo
+- Contribuições manuais ao longo do tempo
+- Progress bar com % atingida e projeção de data de conclusão
+
+### 7.6 Categorias
+- CRUD de categorias personalizadas por utilizador
+- Categorias padrão criadas automaticamente no registo
+- Ícone e cor personalizáveis
+
+### 7.7 Relatórios
+- Gráfico de linha: receitas vs despesas nos últimos N meses
+- Gráfico de pizza: distribuição por categoria
+- Tabela de resumo mensal
+- Exportação filtrada (data de início / fim) em CSV ou PDF
+
+### 7.8 Tipos de Utilizador (Condicional — justificado)
+- **user**: acesso ao próprio espaço financeiro
+- **admin**: acesso ao painel de administração (lista de utilizadores, estatísticas globais do sistema)
+- O role=admin é atribuído diretamente na BD (sem registo público como admin)
+
+---
+
+## 8. IMPLEMENTAÇÃO DO MODO IA
+
+### Fluxo
+```
+Angular AIInsightWidget
+    → POST /api/ai/insights
+    → AIService.php
+        → ReportService::getSummary() [dados financeiros do user]
+        → Monta prompt estruturado
+        → Chama Claude API (api.anthropic.com/v1/messages)
+        → Extrai texto da resposta
+    → Retorna insight em JSON
+```
+
+### Prompt Template (AIService.php)
+```php
+$prompt = "
+Analisa os seguintes dados financeiros pessoais e fornece 3 insights
+acionáveis e concisos em {$user->language}:
+
+Período: {$summary['period']}
+Receitas totais: {$summary['total_income']} {$user->currency}
+Despesas totais: {$summary['total_expense']} {$user->currency}
+Categorias com mais despesas: {$summary['top_categories']}
+Orçamentos excedidos: {$summary['over_budget_count']}
+Metas ativas: {$summary['active_goals']}
+
+Responde apenas com os 3 insights, em formato JSON:
+[{\"title\": \"...\", \"description\": \"...\", \"type\": \"warning|tip|success\"}]
+";
+```
+
+---
+
+## 9. GITHUB E VERSIONAMENTO
+
+### Estrutura de Repositórios
+```
+github.com/{username}/sgfp-frontend   ← Angular
+github.com/{username}/sgfp-backend    ← PHP puro
+```
+Ou mono-repo:
+```
+github.com/{username}/sgfp/
+    ├── frontend/
+    └── backend/
+```
+
+### Convenção de Commits (Conventional Commits)
+```
+feat(transactions): add filter by date range
+fix(auth): handle expired token on interceptor
+refactor(budget): extract progress calculation to service
+docs: add API endpoint reference
+chore(db): add seed for default categories
+```
+
+### Branches Sugeridos
+- `main` — produção estável
+- `develop` — integração de features
+- `feature/{nome}` — desenvolvimento de cada feature
+- `fix/{nome}` — correções
+
+### .gitignore (Backend)
+```
+.env
+vendor/
+*.log
+```
+
+### .gitignore (Frontend)
+```
+node_modules/
+dist/
+.env
+```
+
+---
+
+## 10. ENTREGA FINAL
+
+### Documentação Técnica (≤ 5 páginas)
+1. Introdução e descrição do sistema
+2. Arquitetura (diagrama de pastas backend/frontend)
+3. Base de dados (diagrama ER + decisões de normalização)
+4. Decisões técnicas (APIs escolhidas, IA, exportação)
+5. Dificuldades encontradas e soluções adotadas
+
+### Checklist de Conformidade com lab_4
+
+| Requisito lab_4 | Status |
+|---|---|
+| Angular no frontend | ✅ |
+| PHP puro no backend | ✅ |
+| Base de dados relacional SQL | ✅ MySQL, 6 tabelas |
+| CRUD completo | ✅ Todas as entidades |
+| Autenticação completa | ✅ Registo, login, logout, recuperação |
+| API externa | ✅ Frankfurter.app (câmbio) |
+| Interface responsiva | ✅ Angular + CSS responsivo |
+| Modo claro/escuro | ✅ ThemeService + CSS custom properties |
+| Múltiplos idiomas (≥ 2) | ✅ PT + EN via ngx-translate |
+| Exportação CSV ou PDF | ✅ Ambos |
+| Tipos de utilizador + permissões | ✅ admin / user com guards |
+| Componentes reutilizáveis (frontend) | ✅ Módulo shared/ |
+| Organização por módulos (frontend) | ✅ features/ por domínio |
+| Separação interface/lógica/serviços | ✅ component / service / model |
+| Separação lógica/acesso/endpoints (backend) | ✅ Controller / Service / Repository |
+| GitHub com histórico progressivo | ✅ Conventional Commits |
+| Scripts de BD | ✅ schema.sql + seed.sql |
+| Documento técnico ≤ 5 páginas | ✅ A produzir |
+
+---
+
+*Especificação gerada com base exclusivamente no conteúdo do Lab #04 — ISPTEC 2025/2026.*
+*Nenhum requisito foi inventado ou extrapolado sem rotulagem explícita.*

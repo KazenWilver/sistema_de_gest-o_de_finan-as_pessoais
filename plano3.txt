@@ -1,0 +1,442 @@
+Abaixo vai uma leitura técnica fiel ao **Lab #04** e, depois, uma proposta completa e implementável para o **Sistema de Gestão Financeira Pessoal**. Onde o PDF não dá base suficiente, marquei explicitamente como **[bloqueado]** ou **[pressuposto reversível]**. O laboratório é centrado em **desenvolvimento assistido por IA**, **organização de código**, **separação de responsabilidades**, **reutilização**, **modularidade** e qualidade estrutural, não apenas funcionalidade. Também exige trabalho em grupo com no máximo quatro elementos, entrega de oito sistemas no total, evidência de responsabilidade individual via GitHub e cumprimento das duas fases com datas definidas.  
+
+## 1) O que o Lab #04 exige mesmo
+
+O teu sistema de finanças pessoais pertence ao **segundo conjunto** de temas. O PDF permite liberdade nas funcionalidades específicas, desde que o sistema seja utilizável, coerente, com fluxo lógico consistente e resolva um problema real dentro do tema escolhido. Para todos os sistemas, os requisitos técnicos obrigatórios incluem autenticação completa, base de dados relacional com pelo menos três tabelas e CRUD, integração com pelo menos uma API externa quando aplicável, interface responsiva, modo claro/escuro com alternância funcional, suporte a pelo menos duas línguas e exportação CSV ou PDF.  
+
+O stack também está fechado pelo enunciado: **Angular no frontend**, **PHP puro no backend**, **SQL relacional**, comunicação por **HTTP** e respostas em **JSON**. No frontend, o PDF pede reutilização de componentes, organização por módulos e separação entre interface, lógica e serviços. No backend, exige separação entre lógica de negócio, acesso a dados e endpoints, com estrutura organizada e reutilização de código. A qualidade da organização do código é um critério principal de avaliação. 
+
+O laboratório também fixa as entregas: repositórios no GitHub, scripts da base de dados e um documento técnico com até cinco páginas. A avaliação considera funcionamento, qualidade das funcionalidades, organização do código, uso de BD e APIs, qualidade da interface, clareza da autoria individual e consistência do versionamento. 
+
+## 2) O que o PDF **não** define
+
+Isto é importante para não inventar requisitos:
+
+* O PDF **não define funcionalidades exactas** para o Sistema de Gestão Financeira Pessoal. 
+* O PDF **não escolhe APIs concretas**. 
+* O PDF **não menciona scraping web**. Portanto, eu não consigo concluir que esteja permitido. **[bloqueado]**
+* O PDF **não obriga a uma funcionalidade de IA no produto final**; obriga sim a usar IA de forma crítica no desenvolvimento. 
+* O PDF **não obriga a múltiplos perfis de utilizador** neste tema específico; isso só deve ser implementado quando a natureza do problema justificar. Num sistema de finanças pessoais puro, a opção mais limpa é manter um único tipo de utilizador autenticado. **[pressuposto reversível]** 
+
+## 3) Leitura técnica do tema “Gestão Financeira Pessoal”
+
+Para este tema, a interpretação mais forte e coerente é: o utilizador precisa de **registar entradas e saídas**, organizar por **contas**, **categorias**, **orçamentos**, acompanhar **saldo**, e consultar **relatórios**. Isso encaixa bem no requisito de sistema utilizável, com fluxo lógico claro, e dá matéria suficiente para CRUD, autenticação, exportação e eventual integração externa. **[pressuposto reversível]**
+
+A melhor abordagem, dentro do espírito do lab, é construir um sistema que seja útil sem ser excessivamente complexo: foco em **lançamentos financeiros**, **categorias**, **contas**, **orçamentos mensais**, **resumos visuais** e **exportação de relatórios**. Isso entrega valor real e facilita manter o código organizado. **[pressuposto reversível]**
+
+## 4) Estrutura completa recomendada do projecto
+
+### 4.1 Estrutura do repositório
+
+Uma estrutura limpa e compatível com o lab seria esta:
+
+```text
+financeiro-pessoal/
+├─ frontend/
+│  ├─ src/
+│  │  ├─ app/
+│  │  │  ├─ core/
+│  │  │  │  ├─ guards/
+│  │  │  │  ├─ interceptors/
+│  │  │  │  ├─ services/
+│  │  │  │  └─ models/
+│  │  │  ├─ shared/
+│  │  │  │  ├─ components/
+│  │  │  │  ├─ directives/
+│  │  │  │  ├─ pipes/
+│  │  │  │  └─ utils/
+│  │  │  ├─ features/
+│  │  │  │  ├─ auth/
+│  │  │  │  ├─ dashboard/
+│  │  │  │  ├─ transactions/
+│  │  │  │  ├─ accounts/
+│  │  │  │  ├─ categories/
+│  │  │  │  ├─ budgets/
+│  │  │  │  ├─ reports/
+│  │  │  │  └─ settings/
+│  │  │  ├─ app-routing.module.ts
+│  │  │  ├─ app.module.ts
+│  │  │  └─ app.component.*
+│  │  ├─ assets/
+│  │  ├─ environments/
+│  │  └─ styles.scss
+│  └─ angular.json
+├─ backend/
+│  ├─ public/
+│  │  └─ index.php
+│  ├─ app/
+│  │  ├─ Core/
+│  │  │  ├─ Router.php
+│  │  │  ├─ Request.php
+│  │  │  ├─ Response.php
+│  │  │  ├─ Auth.php
+│  │  │  └─ Validator.php
+│  │  ├─ Config/
+│  │  │  ├─ database.php
+│  │  │  └─ app.php
+│  │  ├─ Controllers/
+│  │  ├─ Services/
+│  │  ├─ Repositories/
+│  │  ├─ Models/
+│  │  ├─ Middlewares/
+│  │  ├─ Helpers/
+│  │  └─ Languages/
+│  ├─ storage/
+│  │  ├─ logs/
+│  │  └─ exports/
+│  └─ database/
+│     └─ schema.sql
+├─ docs/
+│  ├─ api.md
+│  ├─ architecture.md
+│  └─ report-template.md
+└─ README.md
+```
+
+Esta organização cumpre bem o que o lab pede: módulos, reutilização, separação entre interface/lógica/serviços no frontend, e separação entre endpoints/lógica de negócio/acesso a dados no backend. 
+
+### 4.2 Organização por responsabilidades
+
+No backend, a regra deve ser:
+
+* **Controllers**: recebem a requisição e devolvem JSON.
+* **Services**: aplicam regras de negócio.
+* **Repositories**: falam com a base de dados.
+* **Models**: representam entidades e validações simples.
+* **Core**: router, request, response, auth, validação e utilitários.
+
+Isto evita misturar SQL com regras de negócio e mantém o sistema fácil de testar e de evoluir. **[pressuposto reversível]**
+
+No frontend, a regra deve ser:
+
+* **Features**: páginas e fluxos completos.
+* **Shared**: componentes reutilizáveis.
+* **Core**: serviços globais, guards e interceptors.
+* **Services**: comunicação com API.
+* **Routing por módulo**: cada área com rotas próprias.
+
+Isto torna evidente a modularidade que o PDF exige. 
+
+## 5) Base de dados proposta
+
+Para este tema, uma modelação forte e normalizada pode ser esta.
+
+### Tabelas principais
+
+#### `users`
+
+Campos:
+
+* `id`
+* `name`
+* `email` único
+* `password_hash`
+* `language`
+* `theme`
+* `created_at`
+* `updated_at`
+
+#### `accounts`
+
+Campos:
+
+* `id`
+* `user_id` FK
+* `name`
+* `type` (`cash`, `bank`, `mobile_money`, etc.)
+* `currency`
+* `created_at`
+* `updated_at`
+
+#### `categories`
+
+Campos:
+
+* `id`
+* `user_id` FK
+* `name`
+* `kind` (`income` ou `expense`)
+* `icon`
+* `color`
+* `created_at`
+* `updated_at`
+
+#### `transactions`
+
+Campos:
+
+* `id`
+* `user_id` FK
+* `account_id` FK
+* `category_id` FK
+* `type` (`income` ou `expense`)
+* `amount`
+* `description`
+* `transaction_date`
+* `payment_method`
+* `created_at`
+* `updated_at`
+
+#### `budgets`
+
+Campos:
+
+* `id`
+* `user_id` FK
+* `category_id` FK
+* `month`
+* `year`
+* `limit_amount`
+* `created_at`
+* `updated_at`
+
+### Tabelas de suporte recomendadas
+
+#### `password_resets`
+
+Para recuperação de senha.
+
+#### `exchange_rates_cache`
+
+Para guardar dados recebidos da API externa e evitar chamadas desnecessárias.
+
+#### `export_logs`
+
+Para registar relatórios exportados, se quiseres auditoria simples.
+
+### Relações
+
+* `users 1—N accounts`
+* `users 1—N categories`
+* `users 1—N transactions`
+* `users 1—N budgets`
+* `accounts 1—N transactions`
+* `categories 1—N transactions`
+* `categories 1—N budgets`
+
+### Normalização
+
+A proposta acima fica adequada em **3FN** se:
+
+* não guardares saldo “manual” como fonte de verdade;
+* o saldo for calculado a partir das transações;
+* dados repetíveis forem isolados em tabelas próprias;
+* categorias e contas não forem duplicadas dentro das transações.
+
+Isto é a solução mais limpa para manutenção e coerência. **[pressuposto reversível]**
+
+## 6) Endpoints backend recomendados
+
+### Autenticação
+
+* `POST /api/auth/register`
+* `POST /api/auth/login`
+* `POST /api/auth/logout`
+* `POST /api/auth/forgot-password`
+* `POST /api/auth/reset-password`
+* `GET /api/auth/me`
+
+### Dashboard
+
+* `GET /api/dashboard/summary`
+* `GET /api/dashboard/charts`
+* `GET /api/dashboard/recent-transactions`
+
+### Contas
+
+* `GET /api/accounts`
+* `POST /api/accounts`
+* `PUT /api/accounts/{id}`
+* `DELETE /api/accounts/{id}`
+
+### Categorias
+
+* `GET /api/categories`
+* `POST /api/categories`
+* `PUT /api/categories/{id}`
+* `DELETE /api/categories/{id}`
+
+### Transações
+
+* `GET /api/transactions`
+* `POST /api/transactions`
+* `GET /api/transactions/{id}`
+* `PUT /api/transactions/{id}`
+* `DELETE /api/transactions/{id}`
+
+### Orçamentos
+
+* `GET /api/budgets`
+* `POST /api/budgets`
+* `PUT /api/budgets/{id}`
+* `DELETE /api/budgets/{id}`
+
+### Relatórios
+
+* `GET /api/reports/summary`
+* `GET /api/reports/export?format=csv`
+* `GET /api/reports/export?format=pdf`
+
+### Configurações
+
+* `PUT /api/settings/theme`
+* `PUT /api/settings/language`
+
+Este desenho encaixa perfeitamente com HTTP + JSON e com a separação de responsabilidades pedida pelo lab. 
+
+## 7) Frontend Angular: organização funcional
+
+### Módulos principais
+
+* `AuthModule`
+* `DashboardModule`
+* `AccountsModule`
+* `CategoriesModule`
+* `TransactionsModule`
+* `BudgetsModule`
+* `ReportsModule`
+* `SettingsModule`
+* `SharedModule`
+* `CoreModule`
+
+### Componentes reutilizáveis
+
+* `app-navbar`
+* `app-sidebar`
+* `app-theme-toggle`
+* `app-language-switcher`
+* `app-stat-card`
+* `app-data-table`
+* `app-modal`
+* `app-confirm-dialog`
+* `app-form-field`
+* `app-empty-state`
+* `app-loading-spinner`
+
+### Estado e serviços
+
+* `AuthService`
+* `AccountService`
+* `CategoryService`
+* `TransactionService`
+* `BudgetService`
+* `ReportService`
+* `SettingsService`
+* `ApiInterceptor`
+* `AuthGuard`
+
+### Rotas
+
+* `/login`
+* `/register`
+* `/forgot-password`
+* `/dashboard`
+* `/transactions`
+* `/accounts`
+* `/categories`
+* `/budgets`
+* `/reports`
+* `/settings`
+
+### UI/UX
+
+O sistema deve ter:
+
+* layout responsivo;
+* navegação lateral ou topo;
+* estados vazios claros;
+* formulários com validação imediata;
+* feedback visual para sucesso/erro;
+* alternância clara entre modo claro e escuro.
+
+Tudo isto é coerente com o requisito de interface responsiva e com a exigência de componentes reutilizáveis e organização modular. 
+
+## 8) API externa: o que faz sentido aqui
+
+**[pressuposto reversível]** Para um sistema de gestão financeira pessoal, a integração externa mais coerente é uma API de **taxas de câmbio**, especialmente se o sistema suportar várias moedas. Isso ajuda em conversões, visualização consolidada e relatórios.
+
+**[bloqueado]** O PDF não indica qual API concreta usar, e eu não posso afirmar “as melhores APIs possíveis” sem consultar fontes actualizadas. O enunciado apenas exige pelo menos uma API externa quando aplicável. 
+
+## 9) Web scraping: permitido ou não?
+
+**[bloqueado]** O PDF não menciona scraping. Portanto, não há base suficiente para dizer que está permitido ou proibido. A decisão técnica mais segura, reversível e alinhada com manutenibilidade é **não usar scraping** e preferir API oficial ou dados introduzidos pelo utilizador. Isto reduz risco de quebra, dependência frágil e problemas de conformidade. O enunciado valoriza organização, reutilização e uso adequado de APIs. 
+
+## 10) IA no projecto
+
+O PDF é claro: o desenvolvimento será feito com assistência de ferramentas de IA, mas de forma crítica, orientada e sem substituir o raciocínio técnico. As soluções geradas devem ser compreendidas, validadas e adaptadas. Portanto, **IA no processo de desenvolvimento: sim, obrigatoriamente como apoio**. **IA como funcionalidade do produto: não é obrigatória**. 
+
+**[pressuposto reversível]** Para este sistema, a melhor abordagem é não depender de IA para cumprir o lab. Se quiseres acrescentar uma funcionalidade extra, a única que faz sentido sem distorcer o tema seria algo como:
+
+* categorização automática de despesas;
+* resumo inteligente de gastos;
+* alertas sobre padrões de consumo.
+
+Mas isso deve ser mantido como extra opcional, nunca como dependência central do sistema. 
+
+## 11) Fluxo funcional recomendado
+
+Um fluxo forte e simples seria este:
+
+1. O utilizador regista-se e faz login.
+2. Define contas e categorias.
+3. Regista transacções de entrada e saída.
+4. Cria orçamentos mensais por categoria.
+5. Vê dashboard com saldo, totais, tendências e alertas.
+6. Filtra por período, conta ou categoria.
+7. Exporta relatórios em CSV ou PDF.
+8. Ajusta idioma e tema.
+
+Isto cumpre o requisito de fluxo lógico consistente e interação real com o utilizador. 
+
+## 12) Decisões técnicas mais fortes para nota alta
+
+As decisões que melhor alinham com o lab são:
+
+* autenticação completa com recuperação de senha;
+* base de dados realmente normalizada;
+* separação nítida entre controller/service/repository;
+* componentes Angular reutilizáveis;
+* tema claro/escuro persistente;
+* PT-PT e EN como idiomas;
+* exportação CSV e PDF;
+* histórico de GitHub com commits pequenos e evolutivos;
+* documentação curta, mas técnica e limpa.
+
+Estas escolhas respondem directamente ao foco do laboratório em qualidade estrutural, modularidade, clareza e consistência.  
+
+## 13) O que eu faria como versão final do sistema
+
+A versão ideal, dentro do espírito do PDF, seria:
+
+* **frontend Angular modular**;
+* **backend PHP puro em arquitectura em camadas**;
+* **BD SQL normalizada**;
+* **dashboard financeiro** com visão clara do mês;
+* **CRUD completo** de contas, categorias, transacções e orçamentos;
+* **exportação** para CSV e PDF;
+* **auth completa**;
+* **tema claro/escuro**;
+* **PT-PT + EN**;
+* **API externa de câmbio**;
+* **sem scraping** por defeito;
+* **sem IA como dependência funcional**.
+
+## 14) Verificação final de coerência com o lab
+
+Está coerente com o PDF porque:
+
+* respeita o tema escolhido do segundo conjunto;
+* usa o stack obrigatório Angular + PHP puro + SQL;
+* prevê autenticação, CRUD, API externa, responsividade, modo claro/escuro, duas línguas e exportação;
+* separa correctamente frontend e backend;
+* valoriza organização de código e reutilização;
+* mantém tudo compatível com GitHub e documentação final curta.  
+
+O que ficou **bloqueado** por falta de base no PDF:
+
+* permissão explícita para scraping;
+* APIs concretas “melhores” sem consulta actualizada;
+* obrigatoriedade de IA como funcionalidade do produto;
+* necessidade real de múltiplos tipos de utilizador neste tema.  
+
+Se quiseres, no próximo passo eu transformo isto num **esqueleto técnico completo** com nomes reais de pastas, classes, tabelas SQL e endpoints já prontos para começares a codificar.
