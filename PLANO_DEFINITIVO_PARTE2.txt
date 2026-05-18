@@ -1,0 +1,382 @@
+================================================================================
+    PLANO DEFINITIVO — SISTEMA DE GESTÃO FINANCEIRA PESSOAL (SGFP)
+    Lab #04 · ISPTEC · Engenharia de Software 2 · 2025/2026
+    Documento Técnico Consolidado (Parte 2 de 3)
+================================================================================
+
+================================================================================
+SECÇÃO 6 — ENDPOINTS REST (REFERÊNCIA COMPLETA)
+================================================================================
+
+6.1 AUTENTICAÇÃO
+
+  POST   /api/auth/register         [Público]   Body: name, email, password
+                                                 Resp: user + token (201)
+
+  POST   /api/auth/login            [Público]   Body: email, password
+                                                 Resp: user + token (200)
+
+  POST   /api/auth/logout           [Auth]      Body: —
+                                                 Resp: message (200)
+
+  POST   /api/auth/forgot-password  [Público]   Body: email
+                                                 Resp: message (200)
+
+  POST   /api/auth/reset-password   [Público]   Body: token, password
+                                                 Resp: message (200)
+
+  GET    /api/auth/me               [Auth]      Resp: user (200)
+
+6.2 CONTAS (ACCOUNTS)
+
+  GET    /api/accounts              [Auth]      Resp: lista de contas
+  POST   /api/accounts              [Auth]      Body: name, type, currency
+  PUT    /api/accounts/:id          [Auth]      Body: name, type, currency
+  DELETE /api/accounts/:id          [Auth]      Resp: message
+
+6.3 CATEGORIAS
+
+  GET    /api/categories            [Auth]      Query: ?type=income|expense
+  POST   /api/categories            [Auth]      Body: name, type, icon, color
+  PUT    /api/categories/:id        [Auth]      Body: name, icon, color
+  DELETE /api/categories/:id        [Auth]      Resp: message
+
+6.4 TRANSAÇÕES (CRUD PRINCIPAL)
+
+  GET    /api/transactions          [Auth]      Query: ?type=income&category_id=1
+                                                       &account_id=2
+                                                       &from=2025-01-01&to=2025-12-31
+                                                       &page=1&limit=20
+                                                       &sort=date&order=desc
+  POST   /api/transactions          [Auth]      Body: account_id, category_id, type,
+                                                       amount, description,
+                                                       transaction_date, payment_method,
+                                                       notes
+  GET    /api/transactions/:id      [Auth]      Resp: transação detalhada
+  PUT    /api/transactions/:id      [Auth]      Body: campos a actualizar
+  DELETE /api/transactions/:id      [Auth]      Resp: message
+
+6.5 ORÇAMENTOS (BUDGETS)
+
+  GET    /api/budgets               [Auth]      Resp: lista com valor gasto actual
+  POST   /api/budgets               [Auth]      Body: name, category_id, limit_amount,
+                                                       period, start_date, end_date
+  PUT    /api/budgets/:id           [Auth]      Body: campos a actualizar
+  DELETE /api/budgets/:id           [Auth]      Resp: message
+  GET    /api/budgets/:id/progress  [Auth]      Resp: % usado, valor restante
+
+6.6 DASHBOARD
+
+  GET    /api/dashboard/summary             [Auth]  Query: ?month=2025-06
+         Resp: total_income, total_expense, balance, savings_rate
+
+  GET    /api/dashboard/recent-transactions [Auth]
+         Resp: últimas 5 transações
+
+  GET    /api/dashboard/charts              [Auth]  Query: ?months=6
+         Resp: dados para gráficos (receitas vs despesas por mês)
+
+6.7 RELATÓRIOS E EXPORTAÇÃO
+
+  GET    /api/reports/summary       [Auth]  Query: ?month=2025-06
+         Resp: resumo financeiro do mês
+
+  GET    /api/reports/by-category   [Auth]  Query: ?from=&to=
+         Resp: distribuição por categoria
+
+  GET    /api/reports/trend         [Auth]  Query: ?months=6
+         Resp: tendência receitas vs despesas
+
+  GET    /api/export/csv            [Auth]  Query: ?from=&to=&type=
+         Resp: ficheiro CSV (Content-Disposition: attachment)
+
+  GET    /api/export/pdf            [Auth]  Query: ?from=&to=
+         Resp: ficheiro PDF (Content-Disposition: attachment)
+
+6.8 MOEDAS (CURRENCY)
+
+  GET    /api/currencies/rates      [Auth]  Query: ?base=AOA
+         Resp: taxas de câmbio (do cache ou API Frankfurter)
+
+6.9 CONFIGURAÇÕES
+
+  PUT    /api/settings/profile      [Auth]  Body: name, currency, language
+  PUT    /api/settings/theme        [Auth]  Body: theme (light|dark)
+  PUT    /api/settings/password     [Auth]  Body: current_password, new_password
+
+6.10 ADMINISTRAÇÃO (APENAS ROLE=ADMIN)
+
+  GET    /api/admin/users           [Admin] Resp: lista de utilizadores do sistema
+  GET    /api/admin/stats           [Admin] Resp: estatísticas globais do sistema
+
+6.11 IA (OPCIONAL)
+
+  POST   /api/ai/insights           [Auth]  Body: (vazio — usa dados do user)
+         Resp: array de insights [{title, description, type}]
+
+================================================================================
+SECÇÃO 7 — ARQUITECTURA DO FRONTEND (ANGULAR)
+================================================================================
+
+7.1 ORGANIZAÇÃO DE PASTAS
+
+sgfp-frontend/
+│
+├── src/
+│   ├── app/
+│   │   │
+│   │   ├── core/                           # Módulo singleton (importado 1x)
+│   │   │   ├── guards/
+│   │   │   │   ├── auth.guard.ts           # Redireciona para /auth/login
+│   │   │   │   ├── guest.guard.ts          # Redireciona para /dashboard
+│   │   │   │   └── admin.guard.ts          # Verifica role=admin
+│   │   │   ├── interceptors/
+│   │   │   │   ├── auth.interceptor.ts     # Injeta Bearer token
+│   │   │   │   └── error.interceptor.ts    # Trata 401, 500, erros de rede
+│   │   │   ├── services/
+│   │   │   │   ├── auth.service.ts         # login(), logout(), currentUser$
+│   │   │   │   ├── theme.service.ts        # toggleTheme(), theme$, persiste LS
+│   │   │   │   ├── language.service.ts     # setLanguage(), integra ngx-translate
+│   │   │   │   └── storage.service.ts      # Wrapper tipado do localStorage
+│   │   │   ├── models/
+│   │   │   │   ├── user.model.ts
+│   │   │   │   ├── api-response.model.ts
+│   │   │   │   └── pagination.model.ts
+│   │   │   └── core.module.ts
+│   │   │
+│   │   ├── shared/                         # Componentes reutilizáveis
+│   │   │   ├── components/
+│   │   │   │   ├── navbar/                 # Top bar: logo, user menu, tema, idioma
+│   │   │   │   ├── sidebar/               # Navegação lateral colapsável
+│   │   │   │   ├── shell/                 # Layout wrapper (navbar + sidebar + content)
+│   │   │   │   ├── stat-card/             # Cartão: valor + título + ícone + tendência
+│   │   │   │   ├── chart-wrapper/         # Wrapper de Chart.js com loading/error
+│   │   │   │   ├── data-table/            # Tabela com sort, paginação, filtros
+│   │   │   │   ├── modal/                 # Modal genérico com ng-content
+│   │   │   │   ├── confirm-dialog/        # Dialog de confirmação
+│   │   │   │   ├── empty-state/           # Estado vazio ilustrado
+│   │   │   │   ├── badge/                 # Badge de categoria com cor dinâmica
+│   │   │   │   ├── skeleton-loader/       # Loading skeleton
+│   │   │   │   ├── form-field/            # Campo de formulário reutilizável
+│   │   │   │   ├── theme-toggle/          # Botão de alternância tema
+│   │   │   │   └── language-switcher/     # Selector de idioma
+│   │   │   ├── pipes/
+│   │   │   │   ├── currency-format.pipe.ts # Formata valores na moeda do user
+│   │   │   │   └── relative-date.pipe.ts   # "Há 2 dias", "Ontem"
+│   │   │   ├── directives/
+│   │   │   │   └── click-outside.directive.ts
+│   │   │   └── shared.module.ts
+│   │   │
+│   │   ├── features/                       # Um módulo por domínio (lazy loading)
+│   │   │   │
+│   │   │   ├── auth/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── login/
+│   │   │   │   │   ├── register/
+│   │   │   │   │   ├── forgot-password/
+│   │   │   │   │   └── reset-password/
+│   │   │   │   ├── auth-routing.module.ts
+│   │   │   │   └── auth.module.ts
+│   │   │   │
+│   │   │   ├── dashboard/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── dashboard.component.ts
+│   │   │   │   │   ├── summary-widget/          # Total receitas/despesas/saldo
+│   │   │   │   │   ├── recent-transactions/     # Últimas 5 transações
+│   │   │   │   │   ├── budget-progress/         # Barras de progresso
+│   │   │   │   │   ├── monthly-chart/           # Gráfico receitas vs despesas
+│   │   │   │   │   └── category-pie/            # Gráfico de pizza
+│   │   │   │   ├── services/
+│   │   │   │   │   └── dashboard.service.ts
+│   │   │   │   └── dashboard.module.ts
+│   │   │   │
+│   │   │   ├── transactions/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── transaction-list/
+│   │   │   │   │   ├── transaction-form/        # Criar e editar (mesmo componente)
+│   │   │   │   │   └── transaction-filter/      # Filtros: data, categoria, tipo
+│   │   │   │   ├── models/
+│   │   │   │   │   └── transaction.model.ts
+│   │   │   │   ├── services/
+│   │   │   │   │   └── transaction.service.ts
+│   │   │   │   └── transactions.module.ts
+│   │   │   │
+│   │   │   ├── accounts/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── account-list/
+│   │   │   │   │   └── account-form/
+│   │   │   │   ├── services/
+│   │   │   │   │   └── account.service.ts
+│   │   │   │   └── accounts.module.ts
+│   │   │   │
+│   │   │   ├── categories/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── category-list/
+│   │   │   │   │   └── category-form/
+│   │   │   │   ├── services/
+│   │   │   │   │   └── category.service.ts
+│   │   │   │   └── categories.module.ts
+│   │   │   │
+│   │   │   ├── budgets/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── budget-list/
+│   │   │   │   │   ├── budget-form/
+│   │   │   │   │   └── budget-progress-bar/
+│   │   │   │   ├── services/
+│   │   │   │   │   └── budget.service.ts
+│   │   │   │   └── budgets.module.ts
+│   │   │   │
+│   │   │   ├── reports/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── reports.component.ts
+│   │   │   │   │   ├── monthly-chart/           # Receitas vs despesas por mês
+│   │   │   │   │   ├── category-pie/            # Pizza por categoria
+│   │   │   │   │   └── export-panel/            # Botões CSV e PDF com filtros
+│   │   │   │   ├── services/
+│   │   │   │   │   └── report.service.ts
+│   │   │   │   └── reports.module.ts
+│   │   │   │
+│   │   │   ├── settings/
+│   │   │   │   ├── components/
+│   │   │   │   │   ├── profile-form/
+│   │   │   │   │   ├── security-form/           # Alterar password
+│   │   │   │   │   └── preferences-form/        # Moeda, idioma, tema
+│   │   │   │   └── settings.module.ts
+│   │   │   │
+│   │   │   └── admin/                           # Exclusivo role=admin
+│   │   │       ├── components/
+│   │   │       │   ├── user-list/
+│   │   │       │   └── system-stats/
+│   │   │       ├── guards/
+│   │   │       │   └── admin.guard.ts
+│   │   │       └── admin.module.ts
+│   │   │
+│   │   ├── app-routing.module.ts
+│   │   ├── app.component.ts
+│   │   ├── app.component.html
+│   │   └── app.module.ts
+│   │
+│   ├── assets/
+│   │   ├── i18n/
+│   │   │   ├── pt.json                    # Português (língua padrão)
+│   │   │   └── en.json                    # English
+│   │   └── icons/                         # SVG icons
+│   │
+│   ├── environments/
+│   │   ├── environment.ts                 # API_URL local, debug=true
+│   │   └── environment.prod.ts            # API_URL produção, debug=false
+│   │
+│   └── styles/
+│       ├── _variables.scss                # CSS custom properties
+│       ├── _themes.scss                   # :root[data-theme="dark"] { ... }
+│       ├── _typography.scss
+│       ├── _utilities.scss
+│       └── styles.scss                    # Imports globais
+
+7.2 SISTEMA DE NAVEGAÇÃO (ANGULAR ROUTER)
+
+Rotas Públicas (GuestGuard — redireciona se já autenticado):
+  /auth/login             → LoginComponent
+  /auth/register          → RegisterComponent
+  /auth/forgot-password   → ForgotPasswordComponent
+  /auth/reset-password    → ResetPasswordComponent
+
+Rotas Protegidas (AuthGuard — redireciona se não autenticado):
+  Layout: ShellComponent (navbar + sidebar + router-outlet)
+
+  /dashboard              → DashboardComponent
+  /transactions           → TransactionListComponent
+  /transactions/new       → TransactionFormComponent
+  /transactions/:id/edit  → TransactionFormComponent
+  /accounts               → AccountListComponent
+  /categories             → CategoryListComponent
+  /budgets                → BudgetListComponent
+  /reports                → ReportsComponent
+  /settings/profile       → ProfileFormComponent
+  /settings/security      → SecurityFormComponent
+  /settings/preferences   → PreferencesFormComponent
+
+Rotas Admin (AdminGuard — verifica role=admin):
+  /admin/users            → UserListComponent
+  /admin/stats            → SystemStatsComponent
+
+Rota Fallback:
+  /**                     → Redireciona para /dashboard
+
+Todas as rotas de features usam LAZY LOADING:
+  loadChildren: () => import('./features/X/X.module').then(m => m.XModule)
+
+7.3 MODO CLARO/ESCURO
+
+Implementação via ThemeService:
+  - Persiste preferência no localStorage
+  - Aplica atributo data-theme no document.documentElement
+  - CSS usa custom properties que mudam com o data-theme
+
+  :root {
+    --bg-primary:   #ffffff;
+    --bg-secondary: #f8fafc;
+    --text-primary: #0f172a;
+    --border:       #e2e8f0;
+    --accent:       #6366f1;
+  }
+
+  :root[data-theme="dark"] {
+    --bg-primary:   #0f172a;
+    --bg-secondary: #1e293b;
+    --text-primary: #f1f5f9;
+    --border:       #334155;
+    --accent:       #818cf8;
+  }
+
+  O utilizador também pode guardar a preferência de tema na BD (campo theme
+  na tabela users), sincronizada via PUT /api/settings/theme.
+
+7.4 INTERNACIONALIZAÇÃO (I18N)
+
+Biblioteca: ngx-translate/core + ngx-translate/http-loader
+
+Ficheiros de tradução em assets/i18n/:
+  - pt.json (Português — idioma padrão)
+  - en.json (English)
+
+Estrutura dos ficheiros de tradução:
+  {
+    "nav": {
+      "dashboard":    "Painel" / "Dashboard",
+      "transactions": "Transações" / "Transactions",
+      "accounts":     "Contas" / "Accounts",
+      "budgets":      "Orçamentos" / "Budgets",
+      "categories":   "Categorias" / "Categories",
+      "reports":      "Relatórios" / "Reports",
+      "settings":     "Configurações" / "Settings"
+    },
+    "transaction": {
+      "income":  "Receita" / "Income",
+      "expense": "Despesa" / "Expense",
+      "add":     "Nova Transação" / "New Transaction"
+    },
+    "common": {
+      "save":    "Guardar" / "Save",
+      "cancel":  "Cancelar" / "Cancel",
+      "delete":  "Eliminar" / "Delete",
+      "edit":    "Editar" / "Edit",
+      "confirm": "Confirmar" / "Confirm"
+    }
+  }
+
+  O idioma é persistido no localStorage e sincronizado com a BD (campo
+  language na tabela users) via PUT /api/settings/profile.
+
+7.5 GRÁFICOS
+
+Biblioteca: Chart.js (via ng2-charts para integração Angular)
+
+Gráficos planeados:
+  - Gráfico de linha: receitas vs despesas nos últimos N meses (dashboard + reports)
+  - Gráfico de pizza/donut: distribuição de despesas por categoria
+  - Barras de progresso: orçamentos (verde → amarelo → vermelho)
+
+================================================================================
+FIM DA PARTE 2 — Continua na PARTE 3
+================================================================================

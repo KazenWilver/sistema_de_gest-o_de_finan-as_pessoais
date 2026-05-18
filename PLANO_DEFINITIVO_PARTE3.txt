@@ -1,0 +1,385 @@
+================================================================================
+    PLANO DEFINITIVO — SISTEMA DE GESTÃO FINANCEIRA PESSOAL (SGFP)
+    Lab #04 · ISPTEC · Engenharia de Software 2 · 2025/2026
+    Documento Técnico Consolidado (Parte 3 de 3)
+================================================================================
+
+================================================================================
+SECÇÃO 8 — FUNCIONALIDADES DO SISTEMA (DETALHE FUNCIONAL)
+================================================================================
+
+8.1 AUTENTICAÇÃO (COMPLETA)
+
+  a) Registo:
+     - Formulário: nome, email, password, confirmar password
+     - Validação frontend: email válido, password >= 8 caracteres, match
+     - Validação backend: email único, sanitização de inputs
+     - Ao registar: cria user + categorias padrão + conta "Carteira"
+     - Retorna JWT + dados do utilizador
+
+  b) Login:
+     - Formulário: email, password
+     - Verifica password com password_verify() (bcrypt)
+     - Retorna JWT + dados do utilizador
+     - Guarda token no localStorage
+
+  c) Logout:
+     - Remove token do localStorage
+     - Redireciona para /auth/login
+
+  d) Recuperação de Senha:
+     - Formulário "Esqueci a senha": insere email
+     - Backend gera token aleatório, guarda em password_resets com expiração
+     - Em contexto académico: simula envio de email (retorna token na resposta
+       ou mostra no console do servidor)
+     - Formulário "Nova senha": insere token + nova password
+     - Backend valida token, actualiza password_hash, marca token como usado
+
+8.2 DASHBOARD (VISÃO GERAL FINANCEIRA)
+
+  Componentes:
+  - Summary Widget: 4 cartões com Total Receitas, Total Despesas, Saldo,
+    Taxa de Poupança (% do mês)
+  - Recent Transactions: lista das últimas 5 transações com categoria,
+    valor e data
+  - Budget Progress: barras de progresso dos orçamentos activos do mês
+    (verde < 60%, amarelo 60-80%, vermelho > 80%)
+  - Monthly Chart: gráfico de linha receitas vs despesas (últimos 6 meses)
+  - Category Pie: gráfico de pizza com distribuição de despesas por categoria
+
+  Filtro: mês/ano seleccionável
+
+8.3 TRANSAÇÕES (CRUD PRINCIPAL)
+
+  Lista:
+  - Tabela com colunas: data, descrição, categoria, conta, tipo, valor
+  - Paginação server-side (20 por página)
+  - Ordenação por data, valor ou categoria (clicável nas colunas)
+  - Filtros: período (de-até), tipo (receita/despesa), categoria, conta
+  - Badge colorido para tipo (verde=receita, vermelho=despesa)
+  - Badge com ícone e cor da categoria
+
+  Formulário (Criar/Editar):
+  - Campos: conta (dropdown), categoria (dropdown filtrado por tipo),
+    tipo (receita/despesa), valor, descrição, data, método de pagamento,
+    notas (opcional)
+  - Validação imediata no formulário (required, min value, etc.)
+  - Mesmo componente para criar e editar (detecta :id na rota)
+
+  Eliminar:
+  - Dialog de confirmação antes de eliminar
+  - Feedback visual de sucesso/erro
+
+8.4 CONTAS (ACCOUNTS)
+
+  - CRUD: criar, listar, editar, eliminar
+  - Tipos: Carteira (cash), Banco (bank), Mobile Money, Poupança (savings)
+  - Cada conta tem moeda associada
+  - Saldo calculado automaticamente (soma transações receita - despesa)
+  - Não se pode eliminar conta com transações associadas (RESTRICT ou aviso)
+
+8.5 CATEGORIAS
+
+  - CRUD de categorias personalizadas por utilizador
+  - Categorias padrão criadas automaticamente no registo (is_default=1)
+  - Ícone e cor personalizáveis para cada categoria
+  - Separação por tipo (income / expense)
+  - Não se pode eliminar categoria com transações associadas
+
+8.6 ORÇAMENTOS (BUDGETS)
+
+  - Definição de limite por categoria ou global (category_id = NULL)
+  - Período: semanal, mensal ou anual
+  - Indicador visual de progresso:
+    * Verde: < 60% consumido
+    * Amarelo: 60-80% consumido
+    * Vermelho: > 80% consumido
+  - Alerta visual quando > 80% consumido
+  - Valor gasto calculado automaticamente a partir das transações
+
+8.7 RELATÓRIOS
+
+  - Gráfico de linha: receitas vs despesas nos últimos N meses
+  - Gráfico de pizza: distribuição por categoria (despesas)
+  - Tabela de resumo mensal: mês, receitas, despesas, saldo
+  - Filtros: período (de-até)
+
+8.8 EXPORTAÇÃO
+
+  - CSV: todas as transações filtradas, com cabeçalhos descritivos
+    Formato: Data, Tipo, Categoria, Conta, Descrição, Valor, Moeda
+  - PDF: relatório formatado com:
+    * Cabeçalho com nome do sistema e período
+    * Resumo: total receitas, total despesas, saldo
+    * Tabela de transações
+    * Gerado com FPDF no backend
+  - Ambos descarregados directamente pelo browser (Content-Disposition: attachment)
+
+8.9 CONFIGURAÇÕES
+
+  - Perfil: alterar nome, moeda preferida, idioma
+  - Segurança: alterar password (exige password actual)
+  - Preferências: tema (claro/escuro), idioma, moeda
+
+8.10 PAINEL DE ADMINISTRAÇÃO (ROLE=ADMIN)
+
+  - Lista de utilizadores: nome, email, data de registo, nº de transações
+  - Estatísticas globais: total de utilizadores, total de transações no sistema,
+    utilizadores activos no último mês
+
+================================================================================
+SECÇÃO 9 — IMPLEMENTAÇÃO IA (OPCIONAL)
+================================================================================
+
+NOTA: Esta secção é OPCIONAL. Implementar APENAS se todas as funcionalidades
+base (secções 8.1 a 8.10) estiverem completas e sem bugs.
+
+9.1 FLUXO
+
+  Angular (AIInsightWidget)
+      → POST /api/ai/insights
+      → AIController.php
+          → AIService.php
+              → ReportService::getSummary() [dados financeiros do user]
+              → Monta prompt estruturado
+              → Chama API Claude (api.anthropic.com/v1/messages)
+              → Extrai texto da resposta
+      → Retorna insights em JSON
+
+9.2 PROMPT TEMPLATE (AIService.php)
+
+  "Analisa os seguintes dados financeiros pessoais e fornece 3 insights
+   accionáveis e concisos em {idioma do utilizador}:
+
+   Período: {período}
+   Receitas totais: {total_income} {moeda}
+   Despesas totais: {total_expense} {moeda}
+   Categorias com mais despesas: {top_categories}
+   Orçamentos excedidos: {over_budget_count}
+
+   Responde apenas com os 3 insights, em formato JSON:
+   [{"title": "...", "description": "...", "type": "warning|tip|success"}]"
+
+9.3 WIDGET NO DASHBOARD
+
+  - Card com ícone de IA
+  - Mostra os 3 insights retornados
+  - Botão "Gerar novos insights" para refrescar
+  - Estado de loading enquanto a API responde
+  - Fallback gracioso se a API falhar (esconde o widget, não quebra o sistema)
+
+================================================================================
+SECÇÃO 10 — GITHUB E VERSIONAMENTO
+================================================================================
+
+10.1 ESTRUTURA DO REPOSITÓRIO
+
+  Opção recomendada: MONO-REPO
+
+  sistema_de_gestao_de_financas_pessoais/
+      ├── frontend/          # Angular
+      ├── backend/           # PHP puro
+      ├── database/          # schema.sql + seed.sql
+      ├── docs/              # Documentação técnica
+      └── README.md
+
+10.2 CONVENÇÃO DE COMMITS (CONVENTIONAL COMMITS)
+
+  feat(transactions): add filter by date range
+  feat(auth): implement password recovery flow
+  feat(dashboard): add monthly chart widget
+  fix(auth): handle expired token on interceptor
+  fix(budget): correct progress calculation
+  refactor(budget): extract progress calculation to service
+  style(theme): add dark mode CSS variables
+  docs: add API endpoint reference
+  chore(db): add seed for default categories
+  chore: initial project setup
+
+10.3 ESTRATÉGIA DE BRANCHES
+
+  - main     — produção estável
+  - develop  — integração de features
+  - feature/{nome} — desenvolvimento de cada feature
+  - fix/{nome}     — correcções
+
+10.4 .GITIGNORE
+
+  Backend:
+    .env
+    vendor/
+    *.log
+    storage/exports/
+
+  Frontend:
+    node_modules/
+    dist/
+    .env
+
+================================================================================
+SECÇÃO 11 — FLUXO FUNCIONAL DO UTILIZADOR
+================================================================================
+
+11.1 FLUXO PRINCIPAL
+
+  1. O utilizador regista-se e faz login
+  2. Sistema cria automaticamente categorias padrão + conta "Carteira"
+  3. Utilizador pode criar contas adicionais (banco, mobile money, etc.)
+  4. Utilizador pode personalizar categorias (criar, editar, eliminar)
+  5. Utilizador regista transações (receitas e despesas)
+     - Selecciona conta, categoria, tipo, valor, data, descrição
+  6. Utilizador cria orçamentos mensais por categoria
+  7. Dashboard mostra:
+     - Saldo, totais, taxa de poupança
+     - Últimas transações
+     - Progresso dos orçamentos
+     - Gráficos de tendências
+  8. Utilizador filtra transações por período, categoria, conta
+  9. Utilizador exporta relatórios em CSV ou PDF
+  10. Utilizador ajusta idioma (PT/EN) e tema (claro/escuro)
+
+11.2 FLUXO DO ADMINISTRADOR
+
+  1. Admin faz login com credenciais (role=admin atribuído na BD)
+  2. Acede ao painel de administração
+  3. Visualiza lista de utilizadores do sistema
+  4. Visualiza estatísticas globais (utilizadores, transações, etc.)
+  5. Também tem acesso ao seu próprio espaço financeiro pessoal
+
+================================================================================
+SECÇÃO 12 — DOCUMENTO TÉCNICO FINAL (GUIA PARA AS 5 PÁGINAS)
+================================================================================
+
+Estrutura recomendada para o documento técnico final (máximo 5 páginas):
+
+  Página 1: Introdução e Descrição do Sistema
+    - Objectivo do sistema
+    - Funcionalidades principais
+    - Stack tecnológica utilizada
+
+  Página 2: Arquitectura do Sistema
+    - Diagrama de pastas (backend + frontend)
+    - Padrão arquitectural (Front Controller, camadas)
+    - Fluxo de uma request
+
+  Página 3: Base de Dados
+    - Diagrama ER (pode ser textual ou visual)
+    - Decisões de normalização
+    - Tabelas e suas relações
+
+  Página 4: Decisões Técnicas
+    - API externa escolhida e justificação
+    - Exportação (CSV + PDF)
+    - Autenticação (JWT)
+    - i18n e temas
+    - IA (se implementada)
+
+  Página 5: Dificuldades e Conclusão
+    - Dificuldades encontradas e soluções adoptadas
+    - Lições aprendidas
+    - Possíveis melhorias futuras
+
+================================================================================
+SECÇÃO 13 — CHECKLIST FINAL DE CONFORMIDADE COM O LAB #04
+================================================================================
+
++----+--------------------------------------------------+--------+------------------+
+| #  | Requisito do Lab #04                             | Status | Detalhe          |
++----+--------------------------------------------------+--------+------------------+
+| 1  | Angular no frontend                              |  [ ]   | A implementar    |
+| 2  | PHP puro no backend                              |  [ ]   | A implementar    |
+| 3  | Base de dados relacional SQL                     |  [ ]   | MySQL, 7 tabelas |
+| 4  | CRUD completo                                    |  [ ]   | Todas entidades  |
+| 5  | Autenticação completa                            |  [ ]   | JWT + recuperação|
+| 6  | API externa                                      |  [ ]   | Frankfurter.app  |
+| 7  | Interface responsiva                              |  [ ]   | Angular + SCSS   |
+| 8  | Modo claro/escuro                                |  [ ]   | ThemeService     |
+| 9  | Múltiplos idiomas (>= 2)                         |  [ ]   | PT + EN          |
+| 10 | Exportação CSV ou PDF                            |  [ ]   | Ambos            |
+| 11 | Tipos de utilizador + permissões                 |  [ ]   | admin/user       |
+| 12 | Componentes reutilizáveis (frontend)             |  [ ]   | SharedModule     |
+| 13 | Organização por módulos (frontend)               |  [ ]   | features/ lazy   |
+| 14 | Separação interface/lógica/serviços              |  [ ]   | Component/Service|
+| 15 | Separação lógica/acesso/endpoints (backend)      |  [ ]   | Ctrl/Svc/Repo    |
+| 16 | GitHub com histórico progressivo                 |  [ ]   | Conv. Commits    |
+| 17 | Scripts de BD                                    |  [ ]   | schema + seed    |
+| 18 | Documento técnico <= 5 páginas                   |  [ ]   | A produzir       |
++----+--------------------------------------------------+--------+------------------+
+
+================================================================================
+SECÇÃO 14 — PRIORIDADES DE IMPLEMENTAÇÃO (ORDEM RECOMENDADA)
+================================================================================
+
+FASE 1 — FUNDAÇÃO (Prioridade Máxima)
+  1. Setup do repositório GitHub + estrutura de pastas
+  2. Backend: Config, Database, Router, Response helpers
+  3. Backend: AuthController + AuthService + JWT
+  4. Frontend: Angular CLI setup + CoreModule + AuthModule
+  5. Base de dados: schema.sql + seed.sql
+  6. Login + Registo funcional end-to-end
+
+FASE 2 — CRUD PRINCIPAL
+  7. Backend + Frontend: Accounts (CRUD completo)
+  8. Backend + Frontend: Categories (CRUD completo)
+  9. Backend + Frontend: Transactions (CRUD completo com filtros)
+  10. Backend + Frontend: Budgets (CRUD + progresso)
+
+FASE 3 — DASHBOARD E RELATÓRIOS
+  11. Dashboard: summary widget, recent transactions
+  12. Dashboard: gráficos (Chart.js)
+  13. Reports: gráficos + tabelas de resumo
+  14. Budget progress bars no dashboard
+
+FASE 4 — FEATURES OBRIGATÓRIAS
+  15. Tema claro/escuro (ThemeService + CSS)
+  16. Internacionalização PT/EN (ngx-translate)
+  17. Exportação CSV
+  18. Exportação PDF (FPDF)
+  19. API de câmbio (Frankfurter.app + cache)
+
+FASE 5 — ADMIN E POLISH
+  20. Painel de administração
+  21. Componentes shared (skeleton, empty-state, confirm-dialog)
+  22. Responsividade final
+  23. Testes e correcções de bugs
+
+FASE 6 — EXTRAS (APENAS SE HOUVER TEMPO)
+  24. Insights IA (Claude API)
+  25. Animações e micro-interações
+  26. Documentação técnica final
+
+================================================================================
+SECÇÃO 15 — NOTAS FINAIS E PRESSUPOSTOS
+================================================================================
+
+15.1 PRESSUPOSTOS REVERSÍVEIS (podem ser alterados sem impacto estrutural)
+
+  - Contas (accounts) como entidade separada: pode ser simplificado para
+    uma única conta por utilizador se necessário
+  - IA como funcionalidade: pode ser completamente removida
+  - Admin panel: pode ser simplificado ou removido
+  - Tipos de utilizador: pode ser mantido apenas "user" se o grupo decidir
+
+15.2 DECISÕES BLOQUEADAS (não há base no PDF para mudar)
+
+  - Stack: Angular + PHP puro + MySQL (obrigatório)
+  - Comunicação: HTTP + JSON (obrigatório)
+  - Sem web scraping (não mencionado no lab)
+  - Sem frameworks PHP (obrigatório)
+
+15.3 COERÊNCIA COM O LAB #04
+
+  Este plano é coerente com o PDF porque:
+  - Respeita o tema do segundo conjunto
+  - Usa o stack obrigatório Angular + PHP puro + SQL
+  - Prevê autenticação, CRUD, API externa, responsividade, modo claro/escuro,
+    duas línguas e exportação
+  - Separa correctamente frontend e backend
+  - Valoriza organização de código e reutilização
+  - É compatível com GitHub e documentação final curta
+  - Prioriza qualidade estrutural sobre quantidade de features
+
+================================================================================
+    FIM DO PLANO DEFINITIVO
+    Documento Consolidado: Parte 1 + Parte 2 + Parte 3
+================================================================================

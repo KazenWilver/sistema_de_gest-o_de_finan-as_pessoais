@@ -1,0 +1,507 @@
+================================================================================
+    PLANO DEFINITIVO — SISTEMA DE GESTÃO FINANCEIRA PESSOAL (SGFP)
+    Lab #04 · ISPTEC · Engenharia de Software 2 · 2025/2026
+    Documento Técnico Consolidado (Parte 1 de 3)
+================================================================================
+
+Este documento é a fusão definitiva dos três planos de análise do projecto.
+Todos os requisitos foram cruzados, validados contra o enunciado do Lab #04,
+e consolidados numa única especificação técnica implementável.
+
+================================================================================
+SECÇÃO 1 — ENQUADRAMENTO E CONTEXTO
+================================================================================
+
+1.1 SOBRE O LABORATÓRIO
+
+O Lab #04 exige a construção de sistemas web com qualidade profissional.
+O foco principal está em:
+  - Organização estrutural e separação de responsabilidades
+  - Manutenibilidade e evolução progressiva do código
+  - Reutilização de componentes e modularidade
+  - Qualidade da interface e experiência do utilizador
+  - Uso de IA como instrumento de apoio ao desenvolvimento (não como substituto)
+
+O Sistema de Gestão Financeira Pessoal pertence ao SEGUNDO CONJUNTO de temas.
+
+1.2 STACK TECNOLÓGICA OBRIGATÓRIA (FIXADA PELO ENUNCIADO)
+
+  - Frontend:     Angular
+  - Backend:      PHP puro (sem frameworks como Laravel, Symfony, etc.)
+  - Base de Dados: SQL relacional (MySQL)
+  - Comunicação:  HTTP com respostas em JSON
+  - Versionamento: GitHub com histórico progressivo
+
+1.3 CRITÉRIOS DE AVALIAÇÃO (POR ORDEM DE IMPORTÂNCIA)
+
+  1. Funcionamento do sistema
+  2. Qualidade das funcionalidades
+  3. Organização do código (CRITÉRIO PRINCIPAL)
+  4. Uso adequado de base de dados e APIs
+  5. Qualidade da interface
+  6. Clareza da autoria individual (commits no GitHub)
+  7. Consistência do versionamento
+
+1.4 ENTREGAS EXIGIDAS
+
+  - Repositórios no GitHub (com histórico de commits evolutivo)
+  - Scripts da base de dados (schema.sql + seed.sql)
+  - Documento técnico final (máximo 5 páginas)
+
+================================================================================
+SECÇÃO 2 — REQUISITOS OBRIGATÓRIOS CONSOLIDADOS
+================================================================================
+
+A tabela seguinte lista TODOS os requisitos extraídos do Lab #04, com a
+indicação de como serão implementados no SGFP:
+
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| #  | Requisito                                                | Tipo        | Implementação no SGFP               |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R1 | Autenticação completa (registo, login, logout,           | Obrigatório | JWT + recuperação via token na BD   |
+|    | recuperação de senha)                                    |             |                                     |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R2 | Base de dados relacional >= 3 tabelas com CRUD           | Obrigatório | 6 tabelas: users, categories,       |
+|    |                                                          |             | transactions, accounts, budgets,    |
+|    |                                                          |             | currency_rates                      |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R3 | Integração com >= 1 API externa (quando aplicável)       | Obrigatório | Frankfurter.app (taxas de câmbio)   |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R4 | Interface responsiva                                     | Obrigatório | Angular + CSS responsivo + SCSS     |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R5 | Modo claro e escuro com alternância funcional             | Obrigatório | ThemeService + CSS custom properties|
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R6 | Suporte a múltiplos idiomas (mínimo 2)                   | Obrigatório | PT + EN via ngx-translate           |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R7 | Exportação de dados ou relatórios (CSV ou PDF)           | Obrigatório | Ambos: CSV nativo + PDF via FPDF    |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R8 | Distinção de tipos de utilizador + permissões            | Condicional | admin / user com guards Angular     |
+|    | diferenciadas                                            | (Justificado)|                                    |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R9 | Componentes reutilizáveis (frontend)                     | Obrigatório | SharedModule com 10+ componentes    |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R10| Separação interface/lógica/serviços (frontend)           | Obrigatório | Component / Service / Model         |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+| R11| Separação lógica/acesso/endpoints (backend)              | Obrigatório | Controller / Service / Repository   |
++----+----------------------------------------------------------+-------------+-------------------------------------+
+
+================================================================================
+SECÇÃO 3 — DECISÕES TÉCNICAS DEFINITIVAS
+================================================================================
+
+3.1 API EXTERNA: FRANKFURTER.APP
+
+DECISÃO: Usar a Frankfurter API para conversão de moedas.
+
+Justificação:
+  - 100% gratuita e open-source
+  - Sem registo, sem chave de API, sem limites documentados
+  - Mantida com dados do Banco Central Europeu (BCE)
+  - Retorna JSON limpo e directo
+  - Ideal para ambiente académico
+  - Directamente relevante para gestão financeira pessoal
+  - URL exemplo: https://api.frankfurter.app/latest?from=USD&to=AOA,EUR
+
+Implementação:
+  - CurrencyService.php no backend faz a chamada HTTP
+  - Resultados guardados em cache na tabela currency_rates
+  - TTL de cache: 6 horas (evita chamadas desnecessárias)
+  - Frontend mostra valores convertidos no dashboard
+
+3.2 WEB SCRAPING
+
+DECISÃO: NÃO UTILIZAR
+
+Justificação:
+  - O Lab #04 não menciona scraping em nenhum ponto
+  - O requisito de integração externa refere-se explicitamente a "API externa"
+  - Scraping introduziria dependência frágil e risco de quebra
+  - As taxas de câmbio são melhor obtidas via REST API
+  - Decisão alinhada com boas práticas de Engenharia de Software
+
+3.3 INTELIGÊNCIA ARTIFICIAL
+
+DECISÃO: IA como EXTRA OPCIONAL, nunca como dependência funcional
+
+O Lab #04 exige:
+  - IA como ferramenta de DESENVOLVIMENTO (obrigatório) → usar para estruturar,
+    depurar e acelerar o código
+  - IA como funcionalidade do PRODUTO → NÃO obrigatório
+
+Funcionalidade IA opcional (implementar APENAS se funcionalidades base estiverem
+100% concluídas e sem bugs):
+
+  Opção: "Insights Financeiros Inteligentes"
+  - Backend envia resumo financeiro do utilizador para API Claude (Anthropic)
+  - API retorna 3 insights accionáveis (alertas, dicas, padrões)
+  - Feature isolada num AIService.php — removível sem impacto no sistema
+  - Widget no dashboard mostra os insights
+  - Alternativa: categorização automática de despesas baseada na descrição
+
+  NOTA CRÍTICA: Esta funcionalidade é um "nice-to-have". O sistema DEVE
+  funcionar completamente sem ela.
+
+3.4 EXPORTAÇÃO DE DADOS
+
+  - CSV: gerado no backend PHP nativamente (sem biblioteca externa)
+  - PDF: gerado no backend com FPDF (biblioteca PHP gratuita, zero dependências)
+  - Ambos expostos via endpoints dedicados com cabeçalhos HTTP correctos
+  - Filtros: período (data início/fim), tipo (receita/despesa), categoria
+
+3.5 TIPOS DE UTILIZADOR
+
+DECISÃO: Implementar dois perfis (admin / user)
+
+  - user: acesso ao próprio espaço financeiro (dashboard, transações, etc.)
+  - admin: acesso ao painel de administração (lista de utilizadores, stats globais)
+  - O role=admin é atribuído directamente na BD (sem registo público como admin)
+  - Guards no Angular (AuthGuard + AdminGuard) controlam o acesso
+  - AdminMiddleware.php no backend verifica o role
+
+  Justificação: O lab pede distinção de tipos de utilizador "quando a natureza
+  do problema justificar". Num sistema financeiro partilhado ou institucional,
+  ter um admin que gere categorias globais e vê estatísticas do sistema é
+  plenamente justificável.
+
+================================================================================
+SECÇÃO 4 — BASE DE DADOS (MYSQL)
+================================================================================
+
+4.1 DIAGRAMA DE ENTIDADES E RELACIONAMENTOS
+
+  users ──< accounts
+  users ──< categories
+  users ──< transactions
+  users ──< budgets
+  accounts ──< transactions
+  categories ──< transactions
+  categories ──< budgets
+  password_resets (tabela independente ligada a users)
+  currency_rates (tabela de cache independente)
+
+Relações:
+  - users 1—N accounts
+  - users 1—N categories
+  - users 1—N transactions
+  - users 1—N budgets
+  - accounts 1—N transactions
+  - categories 1—N transactions
+  - categories 1—N budgets
+
+4.2 DEFINIÇÃO DAS TABELAS (SQL)
+
+-- ================================================================
+-- TABELA 1: users
+-- Autenticação, perfil e preferências do utilizador
+-- ================================================================
+CREATE TABLE users (
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name          VARCHAR(100)  NOT NULL,
+    email         VARCHAR(150)  NOT NULL UNIQUE,
+    password_hash VARCHAR(255)  NOT NULL,                -- bcrypt
+    role          ENUM('admin','user') NOT NULL DEFAULT 'user',
+    currency      VARCHAR(10)   NOT NULL DEFAULT 'AOA',  -- moeda preferida
+    language      VARCHAR(5)    NOT NULL DEFAULT 'pt',   -- idioma preferido
+    theme         VARCHAR(10)   NOT NULL DEFAULT 'light',-- tema preferido
+    created_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ================================================================
+-- TABELA 2: accounts
+-- Contas financeiras do utilizador (carteira, banco, mobile money)
+-- ================================================================
+CREATE TABLE accounts (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NOT NULL,
+    name       VARCHAR(100) NOT NULL,
+    type       ENUM('cash','bank','mobile_money','savings','other') NOT NULL DEFAULT 'cash',
+    currency   VARCHAR(10)  NOT NULL DEFAULT 'AOA',
+    created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_acc_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ================================================================
+-- TABELA 3: categories
+-- Classificação de transações (receitas e despesas)
+-- ================================================================
+CREATE TABLE categories (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED NOT NULL,
+    name       VARCHAR(100) NOT NULL,
+    type       ENUM('income','expense') NOT NULL,
+    icon       VARCHAR(60)  NOT NULL DEFAULT 'circle',
+    color      VARCHAR(7)   NOT NULL DEFAULT '#6366f1',
+    is_default TINYINT(1)   NOT NULL DEFAULT 0,
+    created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cat_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ================================================================
+-- TABELA 4: transactions
+-- Operações financeiras (receitas e despesas) — CRUD principal
+-- ================================================================
+CREATE TABLE transactions (
+    id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id        INT UNSIGNED   NOT NULL,
+    account_id     INT UNSIGNED   NOT NULL,
+    category_id    INT UNSIGNED   NOT NULL,
+    type           ENUM('income','expense') NOT NULL,
+    amount         DECIMAL(15,2)  NOT NULL,
+    currency       VARCHAR(10)    NOT NULL DEFAULT 'AOA',
+    description    VARCHAR(255)   NOT NULL,
+    transaction_date DATE         NOT NULL,
+    payment_method VARCHAR(50)    NULL,
+    notes          TEXT           NULL,
+    created_at     TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_tx_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_tx_account FOREIGN KEY (account_id)
+        REFERENCES accounts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_tx_cat FOREIGN KEY (category_id)
+        REFERENCES categories(id) ON DELETE RESTRICT
+);
+
+-- ================================================================
+-- TABELA 5: budgets
+-- Orçamentos mensais por categoria
+-- ================================================================
+CREATE TABLE budgets (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id      INT UNSIGNED   NOT NULL,
+    category_id  INT UNSIGNED   NULL,              -- NULL = orçamento global
+    name         VARCHAR(100)   NOT NULL,
+    limit_amount DECIMAL(15,2)  NOT NULL,
+    period       ENUM('weekly','monthly','yearly') NOT NULL DEFAULT 'monthly',
+    start_date   DATE           NOT NULL,
+    end_date     DATE           NOT NULL,
+    created_at   TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_bud_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_bud_cat FOREIGN KEY (category_id)
+        REFERENCES categories(id) ON DELETE SET NULL
+);
+
+-- ================================================================
+-- TABELA 6: password_resets
+-- Tokens de recuperação de senha
+-- ================================================================
+CREATE TABLE password_resets (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT UNSIGNED   NOT NULL,
+    token      VARCHAR(255)   NOT NULL,
+    expires_at DATETIME       NOT NULL,
+    used       TINYINT(1)     NOT NULL DEFAULT 0,
+    created_at TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pr_user FOREIGN KEY (user_id)
+        REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- ================================================================
+-- TABELA 7: currency_rates (cache de taxas de câmbio)
+-- Evita chamadas desnecessárias à API externa
+-- ================================================================
+CREATE TABLE currency_rates (
+    id              INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    base_currency   VARCHAR(10)    NOT NULL,
+    target_currency VARCHAR(10)    NOT NULL,
+    rate            DECIMAL(20,6)  NOT NULL,
+    fetched_at      TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_pair (base_currency, target_currency)
+);
+
+4.3 NORMALIZAÇÃO
+
+  - 1NF: todos os campos são atómicos, sem grupos repetitivos
+  - 2NF: todas as colunas dependem da chave primária completa
+  - 3NF: sem dependências transitivas
+  - O saldo NUNCA é guardado como campo — é SEMPRE calculado a partir
+    das transações (soma receitas - soma despesas por conta)
+  - Categorias e contas não são duplicadas dentro das transações
+  - currency_rates serve apenas como cache com TTL gerido no CurrencyService
+
+4.4 DADOS INICIAIS (SEED)
+
+Categorias padrão criadas automaticamente após registo de novo utilizador:
+
+  RECEITAS:
+    - Salário       (icon: wallet,     color: #10b981)
+    - Freelance     (icon: laptop,     color: #06b6d4)
+    - Investimentos (icon: trending-up, color: #8b5cf6)
+    - Outros        (icon: circle-dots, color: #6b7280)
+
+  DESPESAS:
+    - Alimentação   (icon: utensils,    color: #f59e0b)
+    - Transporte    (icon: car,         color: #ef4444)
+    - Saúde         (icon: heart-pulse, color: #8b5cf6)
+    - Educação      (icon: book-open,   color: #3b82f6)
+    - Lazer         (icon: gamepad-2,   color: #ec4899)
+    - Habitação     (icon: home,        color: #14b8a6)
+    - Outros        (icon: circle-dots, color: #6b7280)
+
+Conta padrão:
+    - Carteira (type: cash, currency: AOA)
+
+================================================================================
+SECÇÃO 5 — ARQUITECTURA DO BACKEND (PHP PURO)
+================================================================================
+
+5.1 PADRÃO ARQUITECTURAL
+
+Front Controller Pattern — único ponto de entrada (public/index.php)
+que despacha para controllers baseado em método HTTP e URI.
+
+Separação em camadas:
+  Controller → Service → Repository → Database (PDO)
+
+  - Controllers: THIN — recebem request, validam formato, chamam service,
+    devolvem JSON
+  - Services: BUSINESS LOGIC — regras de negócio, cálculos, orquestração
+  - Repositories: DATA ACCESS — queries SQL isoladas com prepared statements
+  - Models: DTOs / entidades simples
+  - Middleware: autenticação JWT, verificação de role, CORS
+  - Helpers: resposta JSON padronizada, validação de inputs, JWT encode/decode
+
+5.2 ORGANIZAÇÃO DE PASTAS DO BACKEND
+
+sgfp-backend/
+│
+├── public/
+│   └── index.php                  # Único ponto de entrada; router central
+│
+├── app/
+│   ├── Config/
+│   │   ├── Database.php           # Singleton PDO — uma conexão por request
+│   │   └── Config.php             # Constantes: DB, JWT_SECRET, API_KEYS
+│   │
+│   ├── Controllers/               # THIN — recebe request, chama service, devolve JSON
+│   │   ├── AuthController.php
+│   │   ├── TransactionController.php
+│   │   ├── CategoryController.php
+│   │   ├── AccountController.php
+│   │   ├── BudgetController.php
+│   │   ├── DashboardController.php
+│   │   ├── ReportController.php
+│   │   ├── ExportController.php
+│   │   ├── CurrencyController.php
+│   │   └── SettingsController.php
+│   │
+│   ├── Services/                  # BUSINESS LOGIC
+│   │   ├── AuthService.php
+│   │   ├── TransactionService.php
+│   │   ├── CategoryService.php
+│   │   ├── AccountService.php
+│   │   ├── BudgetService.php
+│   │   ├── DashboardService.php
+│   │   ├── ReportService.php
+│   │   ├── ExportService.php      # Gera CSV e PDF (usa FPDF)
+│   │   ├── CurrencyService.php    # Chama Frankfurter, gere cache, converte
+│   │   └── AIService.php          # [OPCIONAL] Chama API Claude
+│   │
+│   ├── Repositories/              # DATA ACCESS — queries SQL isoladas
+│   │   ├── UserRepository.php
+│   │   ├── TransactionRepository.php
+│   │   ├── CategoryRepository.php
+│   │   ├── AccountRepository.php
+│   │   ├── BudgetRepository.php
+│   │   └── CurrencyRepository.php
+│   │
+│   ├── Models/                    # DTOs / entidades simples
+│   │   ├── User.php
+│   │   ├── Transaction.php
+│   │   ├── Category.php
+│   │   ├── Account.php
+│   │   └── Budget.php
+│   │
+│   ├── Middleware/
+│   │   ├── AuthMiddleware.php     # Valida JWT; injeta $userId na request
+│   │   ├── AdminMiddleware.php    # Verifica role='admin'
+│   │   └── CorsMiddleware.php     # Headers CORS para Angular dev server
+│   │
+│   ├── Core/
+│   │   ├── Router.php             # Roteamento de URIs
+│   │   ├── Request.php            # Wrapper do request HTTP
+│   │   └── Response.php           # json_response(), json_error()
+│   │
+│   └── Helpers/
+│       ├── Validator.php          # Validação de inputs
+│       └── JwtHelper.php          # Encode/decode JWT (HS256 manual)
+│
+├── vendor/                        # FPDF (copiado manualmente, sem Composer)
+│   └── fpdf/
+│       └── fpdf.php
+│
+├── storage/
+│   ├── logs/                      # Logs do sistema
+│   └── exports/                   # Ficheiros exportados temporários
+│
+├── database/
+│   ├── schema.sql                 # Script de criação das tabelas
+│   └── seed.sql                   # Dados iniciais
+│
+├── .htaccess                      # Redireciona tudo para public/index.php
+└── .env.example                   # Template de variáveis de ambiente
+
+5.3 FLUXO DE UMA REQUEST (EXEMPLO CONCRETO)
+
+  Request: POST /api/transactions
+       │
+       ▼
+  CorsMiddleware::handle()          ← Headers CORS
+       │
+       ▼
+  AuthMiddleware::handle()          ← Valida JWT, extrai user_id
+       │
+       ▼
+  TransactionController::store()    ← Recebe JSON, valida formato básico
+       │
+       ▼
+  TransactionService::create()      ← Regras de negócio:
+                                       · Confirmar que category pertence ao user
+                                       · Confirmar que account pertence ao user
+                                       · Converter amount para moeda base se necessário
+                                       · Verificar se excede budget activo
+       │
+       ▼
+  TransactionRepository::insert()   ← INSERT com PDO prepared statement
+       │
+       ▼
+  Response::json(['id' => $id], 201) ← Resposta JSON padronizada
+
+5.4 CONVENÇÃO DE RESPOSTAS JSON
+
+  Sucesso:
+  {
+    "status": "success",
+    "data": { ... },
+    "message": "Transação criada com sucesso"
+  }
+
+  Erro:
+  {
+    "status": "error",
+    "message": "Dados inválidos",
+    "errors": {
+      "amount": "O valor é obrigatório",
+      "category_id": "Categoria não encontrada"
+    }
+  }
+
+5.5 AUTENTICAÇÃO (JWT)
+
+  - Registo: hash bcrypt da password, gera JWT, retorna token + dados do user
+  - Login: verifica email + password_hash, gera JWT
+  - Logout: token invalidado no frontend (localStorage.removeItem)
+  - JWT: HS256 implementação manual, expiração configurável (7 dias)
+  - Recuperação de senha: gera token aleatório, guarda em password_resets
+    com data de expiração, "envia" link (simulado para contexto académico)
+
+================================================================================
+FIM DA PARTE 1 — Continua na PARTE 2
+================================================================================
