@@ -58,23 +58,23 @@ import { Budget, Category } from '../../core/models';
       <div class="modal-backdrop" *ngIf="showModal" (click)="showModal = false">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header"><h3 class="modal-title">{{ editMode ? i18n.t('common.edit') : i18n.t('budget.new') }}</h3><button class="modal-close" (click)="showModal = false">✕</button></div>
-          <div class="form-group"><label class="form-label">{{ i18n.t('acc.name') }}</label><input class="form-input" [(ngModel)]="form.name"></div>
-          <div class="form-group"><label class="form-label">{{ i18n.t('budget.limit') }}</label><input class="form-input" type="number" [(ngModel)]="form.limit_amount" min="1"></div>
+          <div class="form-group"><label class="form-label" for="budget-name">{{ i18n.t('acc.name') }}</label><input class="form-input" id="budget-name" name="name" [(ngModel)]="form.name"></div>
+          <div class="form-group"><label class="form-label" for="budget-limit">{{ i18n.t('budget.limit') }}</label><input class="form-input" type="number" id="budget-limit" name="limit_amount" [(ngModel)]="form.limit_amount" min="1"></div>
           <div class="form-group"><label class="form-label">{{ i18n.t('tx.category') }}</label>
-            <select class="form-select" [(ngModel)]="form.category_id">
+            <select class="form-select" id="budget-category" name="category_id" [(ngModel)]="form.category_id">
               <option [ngValue]="null">{{ i18n.t('budget.general') }}</option>
               @for (c of categories; track c.id) { <option [value]="c.id">{{ c.name }}</option> }
             </select>
           </div>
           <div class="form-group"><label class="form-label">{{ i18n.t('budget.period') }}</label>
-            <select class="form-select" [(ngModel)]="form.period">
+            <select class="form-select" id="budget-period" name="period" [(ngModel)]="form.period">
               <option value="weekly">{{ i18n.t('budget.weekly') }}</option>
               <option value="monthly">{{ i18n.t('budget.monthly') }}</option>
               <option value="yearly">{{ i18n.t('budget.yearly') }}</option>
             </select>
           </div>
-          <div class="form-group"><label class="form-label">{{ i18n.t('budget.start') }}</label><input class="form-input" type="date" [(ngModel)]="form.start_date"></div>
-          <div class="form-group"><label class="form-label">{{ i18n.t('budget.end') }}</label><input class="form-input" type="date" [(ngModel)]="form.end_date"></div>
+          <div class="form-group"><label class="form-label" for="budget-start">{{ i18n.t('budget.start') }}</label><input class="form-input" type="date" id="budget-start" name="start_date" [(ngModel)]="form.start_date"></div>
+          <div class="form-group"><label class="form-label" for="budget-end">{{ i18n.t('budget.end') }}</label><input class="form-input" type="date" id="budget-end" name="end_date" [(ngModel)]="form.end_date"></div>
           <div class="modal-actions">
             <button class="btn btn-secondary" (click)="showModal = false">{{ i18n.t('common.cancel') }}</button>
             <button class="btn btn-primary" (click)="save()">{{ editMode ? i18n.t('common.save') : i18n.t('common.create') }}</button>

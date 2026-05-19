@@ -51,16 +51,16 @@ import { Account } from '../../core/models';
             <h3 class="modal-title">{{ editMode ? i18n.t('common.edit') : i18n.t('acc.new') }}</h3>
             <button class="modal-close" (click)="showModal = false">✕</button>
           </div>
-          <div class="form-group"><label class="form-label">{{ i18n.t('acc.name') }}</label><input class="form-input" [(ngModel)]="form.name"></div>
+          <div class="form-group"><label class="form-label" for="acc-name">{{ i18n.t('acc.name') }}</label><input class="form-input" id="acc-name" name="name" [(ngModel)]="form.name"></div>
           <div class="form-group"><label class="form-label">{{ i18n.t('acc.type') }}</label>
-            <select class="form-select" [(ngModel)]="form.type">
+            <select class="form-select" id="acc-type" name="type" [(ngModel)]="form.type">
               <option value="cash">{{ i18n.t('acc.cash') }}</option><option value="bank">{{ i18n.t('acc.bank') }}</option>
               <option value="mobile_money">{{ i18n.t('acc.mobile') }}</option><option value="savings">{{ i18n.t('acc.savings') }}</option>
               <option value="other">{{ i18n.t('acc.other') }}</option>
             </select>
           </div>
           <div class="form-group"><label class="form-label">{{ i18n.t('acc.currency') }}</label>
-            <select class="form-select" [(ngModel)]="form.currency">
+            <select class="form-select" id="acc-currency" name="currency" [(ngModel)]="form.currency">
               <option value="AOA">AOA</option><option value="USD">USD</option><option value="EUR">EUR</option>
             </select>
           </div>

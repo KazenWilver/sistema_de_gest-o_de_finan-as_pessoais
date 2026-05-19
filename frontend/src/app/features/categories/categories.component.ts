@@ -50,16 +50,16 @@ import { Category } from '../../core/models';
             <h3 class="modal-title">{{ editMode ? i18n.t('common.edit') : i18n.t('cat.new') }}</h3>
             <button class="modal-close" (click)="showModal = false">✕</button>
           </div>
-          <div class="form-group"><label class="form-label">{{ i18n.t('acc.name') }}</label><input class="form-input" [(ngModel)]="form.name"></div>
+          <div class="form-group"><label class="form-label" for="cat-name">{{ i18n.t('acc.name') }}</label><input class="form-input" id="cat-name" name="name" [(ngModel)]="form.name"></div>
           <div class="form-group"><label class="form-label">{{ i18n.t('tx.type') }}</label>
-            <select class="form-select" [(ngModel)]="form.type"><option value="income">{{ i18n.t('tx.income') }}</option><option value="expense">{{ i18n.t('tx.expense') }}</option></select>
+            <select class="form-select" id="cat-type" name="type" [(ngModel)]="form.type"><option value="income">{{ i18n.t('tx.income') }}</option><option value="expense">{{ i18n.t('tx.expense') }}</option></select>
           </div>
           <div class="form-group">
             <label class="form-label">{{ i18n.t('cat.color') }}</label>
             <div class="color-picker-row">
               <div class="color-swatch" *ngFor="let c of presetColors" [style.background]="c"
                    [class.selected]="form.color === c" (click)="form.color = c"></div>
-              <input type="color" [(ngModel)]="form.color" class="color-input-native">
+              <input type="color" id="cat-color" name="color" [(ngModel)]="form.color" class="color-input-native">
             </div>
           </div>
           <div class="form-group"><label class="form-label">{{ i18n.t('cat.icon') }}</label>

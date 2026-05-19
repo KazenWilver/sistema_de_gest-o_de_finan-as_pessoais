@@ -12,17 +12,17 @@
 
   <!-- Filters -->
   <div class="filter-bar">
-    <select class="form-select filter-select" [(ngModel)]="filterType" (change)="applyFilter()">
+    <select class="form-select filter-select" id="filter-type" name="filterType" [(ngModel)]="filterType" (change)="applyFilter()">
       <option value="">{{ i18n.t('common.all') }} {{ i18n.t('tx.type') }}</option>
       <option value="income">{{ i18n.t('tx.income') }}</option>
       <option value="expense">{{ i18n.t('tx.expense') }}</option>
     </select>
-    <select class="form-select filter-select" [(ngModel)]="filterCategory" (change)="applyFilter()">
+    <select class="form-select filter-select" id="filter-category" name="filterCategory" [(ngModel)]="filterCategory" (change)="applyFilter()">
       <option value="">{{ i18n.t('common.all') }} {{ i18n.t('tx.category') }}</option>
       @for (c of categories; track c.id) { <option [value]="c.id">{{ c.name }}</option> }
     </select>
-    <input class="form-input filter-date" type="date" [(ngModel)]="filterFrom" (change)="applyFilter()" placeholder="De">
-    <input class="form-input filter-date" type="date" [(ngModel)]="filterTo" (change)="applyFilter()" placeholder="Até">
+    <input class="form-input filter-date" type="date" id="filter-from" name="filterFrom" [(ngModel)]="filterFrom" (change)="applyFilter()">
+    <input class="form-input filter-date" type="date" id="filter-to" name="filterTo" [(ngModel)]="filterTo" (change)="applyFilter()">
     <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="filterType || filterCategory || filterFrom || filterTo">✕ {{ i18n.t('common.clear') }}</button>
   </div>
 
@@ -86,33 +86,33 @@
         <button class="modal-close" (click)="showModal = false">✕</button>
       </div>
       <div class="form-group"><label class="form-label">{{ i18n.t('tx.type') }}</label>
-        <select class="form-select" [(ngModel)]="form.type"><option value="income">{{ i18n.t('tx.income') }}</option><option value="expense">{{ i18n.t('tx.expense') }}</option></select>
+        <select class="form-select" id="tx-type" name="type" [(ngModel)]="form.type"><option value="income">{{ i18n.t('tx.income') }}</option><option value="expense">{{ i18n.t('tx.expense') }}</option></select>
       </div>
       <div class="form-group"><label class="form-label">{{ i18n.t('tx.amount') }}</label>
-        <input class="form-input" type="number" [(ngModel)]="form.amount" min="0">
+        <input class="form-input" type="number" id="tx-amount" name="amount" [(ngModel)]="form.amount" min="0">
       </div>
       <div class="form-group"><label class="form-label">{{ i18n.t('tx.description') }}</label>
-        <input class="form-input" [(ngModel)]="form.description">
+        <input class="form-input" id="tx-description" name="description" [(ngModel)]="form.description">
       </div>
       <div class="form-group"><label class="form-label">{{ i18n.t('tx.date') }}</label>
-        <input class="form-input" type="date" [(ngModel)]="form.transaction_date">
+        <input class="form-input" type="date" id="tx-date" name="transaction_date" [(ngModel)]="form.transaction_date">
       </div>
       <div class="form-group"><label class="form-label">{{ i18n.t('tx.account') }}</label>
-        <select class="form-select" [(ngModel)]="form.account_id">
+        <select class="form-select" id="tx-account" name="account_id" [(ngModel)]="form.account_id">
           @for (a of accounts; track a.id) { <option [value]="a.id">{{ a.name }}</option> }
         </select>
       </div>
       <div class="form-group"><label class="form-label">{{ i18n.t('tx.category') }}</label>
-        <select class="form-select" [(ngModel)]="form.category_id">
+        <select class="form-select" id="tx-category" name="category_id" [(ngModel)]="form.category_id">
           <option [ngValue]="null">-</option>
           @for (c of filteredCategories; track c.id) { <option [value]="c.id">{{ c.name }}</option> }
         </select>
       </div>
       <div class="form-group"><label class="form-label">{{ i18n.t('tx.method') }}</label>
-        <input class="form-input" [(ngModel)]="form.payment_method" placeholder="Ex: Transferência, Dinheiro">
+        <input class="form-input" id="tx-method" name="payment_method" [(ngModel)]="form.payment_method">
       </div>
       <div class="form-group"><label class="form-label">{{ i18n.t('tx.notes') }}</label>
-        <textarea class="form-input" [(ngModel)]="form.notes" rows="2"></textarea>
+        <textarea class="form-input" id="tx-notes" name="notes" [(ngModel)]="form.notes" rows="2"></textarea>
       </div>
       <div class="modal-actions">
         <button class="btn btn-secondary" (click)="showModal = false">{{ i18n.t('common.cancel') }}</button>
