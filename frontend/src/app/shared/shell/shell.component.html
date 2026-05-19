@@ -1,54 +1,46 @@
-<div class="shell" [class.sidebar-collapsed]="sidebarCollapsed">
-  <!-- Sidebar -->
-  <aside class="sidebar" [class.mobile-open]="mobileMenuOpen">
-    <div class="sidebar-header">
-      <div class="logo" *ngIf="!sidebarCollapsed">
-        <span class="logo-icon">💰</span>
-        <span class="logo-text">SGFP</span>
-      </div>
-      <button class="btn-icon sidebar-toggle" (click)="toggleSidebar()">☰</button>
+<nav class="top-nav">
+  <div class="nav-inner">
+    <a class="nav-logo" routerLink="/dashboard">
+      <span class="logo-mark">SGFP</span>
+      <span class="logo-divider"></span>
+      <span class="logo-sub">Finanças Pessoais</span>
+    </a>
+
+    <div class="nav-links" [class.open]="menuOpen">
+      <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" (click)="menuOpen=false">{{ i18n.t('nav.dashboard') }}</a>
+      <a class="nav-link" routerLink="/transactions" routerLinkActive="active" (click)="menuOpen=false">{{ i18n.t('nav.transactions') }}</a>
+      <a class="nav-link" routerLink="/accounts" routerLinkActive="active" (click)="menuOpen=false">{{ i18n.t('nav.accounts') }}</a>
+      <a class="nav-link" routerLink="/categories" routerLinkActive="active" (click)="menuOpen=false">{{ i18n.t('nav.categories') }}</a>
+      <a class="nav-link" routerLink="/budgets" routerLinkActive="active" (click)="menuOpen=false">{{ i18n.t('nav.budgets') }}</a>
+      <a class="nav-link" routerLink="/reports" routerLinkActive="active" (click)="menuOpen=false">{{ i18n.t('nav.reports') }}</a>
+      <a class="nav-link" *ngIf="auth.isAdmin" routerLink="/admin" routerLinkActive="active" (click)="menuOpen=false">{{ i18n.t('nav.admin') }}</a>
     </div>
 
-    <nav class="sidebar-nav">
-      @for (item of navItems; track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
-          <span class="nav-icon">{{ item.icon }}</span>
-          <span class="nav-label" *ngIf="!sidebarCollapsed">{{ item.label }}</span>
-        </a>
-      }
-    </nav>
+    <div class="nav-actions">
+      <select class="lang-picker" [ngModel]="i18n.currentLang" (ngModelChange)="i18n.setLanguage($event)">
+        @for (lang of i18n.languages; track lang.code) {
+          <option [value]="lang.code">{{ lang.label }}</option>
+        }
+      </select>
 
-    <div class="sidebar-footer">
-      <button class="nav-item theme-toggle" (click)="toggleTheme()">
-        <span class="nav-icon">{{ (themeService.theme$ | async) === 'dark' ? '☀️' : '🌙' }}</span>
-        <span class="nav-label" *ngIf="!sidebarCollapsed">
-          {{ (themeService.theme$ | async) === 'dark' ? 'Modo Claro' : 'Modo Escuro' }}
-        </span>
+      <button class="btn-icon theme-toggle" (click)="theme.toggleTheme()" [title]="theme.currentTheme === 'dark' ? 'Light mode' : 'Dark mode'">
+        {{ theme.currentTheme === 'dark' ? '☀️' : '🌙' }}
+      </button>
+
+      <a class="nav-link" routerLink="/settings" routerLinkActive="active">⚙️</a>
+
+      <button class="btn-text-link" (click)="onLogout()">{{ i18n.t('nav.logout') }}</button>
+
+      <button class="hamburger" (click)="menuOpen = !menuOpen">
+        <span [class.open]="menuOpen"></span>
       </button>
     </div>
-  </aside>
-
-  <!-- Mobile overlay -->
-  <div class="mobile-overlay" *ngIf="mobileMenuOpen" (click)="toggleMobile()"></div>
-
-  <!-- Main content -->
-  <div class="main-wrapper">
-    <!-- Header -->
-    <header class="header">
-      <button class="btn-icon mobile-menu-btn" (click)="toggleMobile()">☰</button>
-      <div class="header-spacer"></div>
-      <div class="header-right">
-        <div class="user-menu">
-          <div class="user-avatar">{{ userInitials }}</div>
-          <span class="user-name">{{ userName }}</span>
-          <button class="btn btn-ghost btn-sm" (click)="logout()">Sair</button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Page content -->
-    <main class="main-content">
-      <router-outlet />
-    </main>
   </div>
-</div>
+</nav>
+
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
+
+<app-toast></app-toast>
+<app-confirm-dialog></app-confirm-dialog>

@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
+import { I18nService } from '../../core/i18n.service';
 import { DashboardSummary, Transaction, Budget } from '../../core/models';
 
 @Component({
@@ -18,16 +20,27 @@ export class DashboardComponent implements OnInit {
   budgets: Budget[] = [];
   userName = '';
   currentMonth = '';
+  loading = true;
 
-  constructor(private api: ApiService, private auth: AuthService) {}
+  constructor(private api: ApiService, private auth: AuthService, public i18n: I18nService) {}
 
   ngOnInit(): void {
     this.userName = this.auth.currentUser?.name?.split(' ')[0] || 'Utilizador';
     this.currentMonth = new Date().toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
 
-    this.api.getDashboardSummary().subscribe(data => this.summary = data);
-    this.api.getRecentTransactions().subscribe(data => this.recentTransactions = data);
-    this.api.getBudgetProgress().subscribe(data => this.budgets = data);
+    forkJoin({
+      summary: this.api.getDashboardSummary(),
+      recent: this.api.getRecentTransactions(),
+      budgets: this.api.getBudgetProgress()
+    }).subscribe({
+      next: (data) => {
+        this.summary = data.summary;
+        this.recentTransactions = data.recent;
+        this.budgets = data.budgets;
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
+    });
   }
 
   formatCurrency(val: number): string {
@@ -35,8 +48,10 @@ export class DashboardComponent implements OnInit {
   }
 
   getBudgetColor(pct: number): string {
-    if (pct >= 90) return 'var(--color-danger)';
+    if (pct >= 90) return 'var(--color-error)';
     if (pct >= 70) return 'var(--color-warning)';
     return 'var(--color-success)';
   }
+
+  Math = Math;
 }

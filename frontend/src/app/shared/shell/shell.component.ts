@@ -1,68 +1,43 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import { ThemeService } from '../../core/theme.service';
+import { I18nService } from '../../core/i18n.service';
+import { ConfirmService } from '../../core/confirm.service';
+import { ToastComponent } from '../toast/toast.component';
+import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule, ToastComponent, ConfirmDialogComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss'
 })
-export class ShellComponent implements OnInit {
-  sidebarCollapsed = false;
-  mobileMenuOpen = false;
-  userName = '';
-  userInitials = '';
-
-  navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { path: '/transactions', label: 'Transações', icon: '💸' },
-    { path: '/accounts', label: 'Contas', icon: '🏦' },
-    { path: '/categories', label: 'Categorias', icon: '🏷️' },
-    { path: '/budgets', label: 'Orçamentos', icon: '📋' },
-    { path: '/reports', label: 'Relatórios', icon: '📈' },
-    { path: '/settings', label: 'Definições', icon: '⚙️' },
-  ];
+export class ShellComponent {
+  menuOpen = false;
 
   constructor(
-    public authService: AuthService,
-    public themeService: ThemeService,
+    public auth: AuthService,
+    public theme: ThemeService,
+    public i18n: I18nService,
+    private confirmService: ConfirmService,
     private router: Router
   ) {}
 
-  ngOnInit(): void {
-    this.authService.currentUser$.subscribe(user => {
-      if (user) {
-        this.userName = user.name;
-        const parts = user.name.split(' ');
-        this.userInitials = parts.length > 1
-          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-          : parts[0].substring(0, 2).toUpperCase();
-      }
+  async onLogout(): Promise<void> {
+    const confirmed = await this.confirmService.confirm({
+      title: this.i18n.t('confirm.logout_title'),
+      message: this.i18n.t('confirm.logout_msg'),
+      confirmText: this.i18n.t('common.yes'),
+      cancelText: this.i18n.t('common.no'),
+      type: 'info'
     });
-
-    if (this.authService.currentUser?.role === 'admin') {
-      this.navItems.push({ path: '/admin', label: 'Admin', icon: '🛡️' });
+    if (confirmed) {
+      this.auth.logout();
+      this.router.navigate(['/auth/login']);
     }
-  }
-
-  toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-  }
-
-  toggleMobile(): void {
-    this.mobileMenuOpen = !this.mobileMenuOpen;
-  }
-
-  toggleTheme(): void {
-    this.themeService.toggleTheme();
-  }
-
-  logout(): void {
-    this.authService.logout();
-    this.router.navigate(['/auth/login']);
   }
 }

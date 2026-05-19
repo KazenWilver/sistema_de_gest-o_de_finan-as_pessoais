@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { I18nService } from '../../core/i18n.service';
 
 @Component({
   selector: 'app-register',
@@ -15,29 +16,25 @@ export class RegisterComponent {
   name = '';
   email = '';
   password = '';
-  error = '';
   loading = false;
+  error = '';
+  touched: Record<string, boolean> = {};
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router, public i18n: I18nService) {}
+
+  get nameValid(): boolean { return this.name.trim().length >= 2; }
+  get emailValid(): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email); }
+  get passwordValid(): boolean { return this.password.length >= 5; }
+  get canSubmit(): boolean { return this.nameValid && this.emailValid && this.passwordValid && !this.loading; }
 
   onSubmit(): void {
-    if (!this.name || !this.email || !this.password) {
-      this.error = 'Preencha todos os campos.';
-      return;
-    }
-    if (this.password.length < 6) {
-      this.error = 'A password deve ter pelo menos 6 caracteres.';
-      return;
-    }
+    this.touched = { name: true, email: true, password: true };
+    if (!this.canSubmit) return;
     this.loading = true;
     this.error = '';
-
-    this.authService.register({ name: this.name, email: this.email, password: this.password }).subscribe({
-      next: () => this.router.navigate(['/dashboard']),
-      error: (err) => {
-        this.loading = false;
-        this.error = err.error?.message || 'Erro ao criar conta.';
-      }
+    this.auth.register({ name: this.name, email: this.email, password: this.password }).subscribe({
+      next: () => { this.loading = false; this.router.navigate(['/dashboard']); },
+      error: (e) => { this.loading = false; this.error = e.error?.message || 'Erro no registo'; }
     });
   }
 }

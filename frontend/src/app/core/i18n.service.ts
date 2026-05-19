@@ -1,0 +1,198 @@
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+const TRANSLATIONS: Record<string, Record<string, string>> = {
+  pt: {
+    'nav.dashboard': 'Painel', 'nav.transactions': 'Transações', 'nav.accounts': 'Contas',
+    'nav.categories': 'Categorias', 'nav.budgets': 'Orçamentos', 'nav.reports': 'Relatórios',
+    'nav.settings': 'Definições', 'nav.admin': 'Admin', 'nav.logout': 'Sair',
+    'common.save': 'Guardar', 'common.cancel': 'Cancelar', 'common.create': 'Criar',
+    'common.edit': 'Editar', 'common.delete': 'Eliminar', 'common.confirm': 'Confirmar',
+    'common.yes': 'Sim', 'common.no': 'Não', 'common.loading': 'A carregar...',
+    'common.search': 'Pesquisar', 'common.filter': 'Filtrar', 'common.export': 'Exportar',
+    'common.new': 'Novo', 'common.all': 'Todos', 'common.none': 'Nenhum',
+    'auth.login': 'Entrar', 'auth.register': 'Registar', 'auth.email': 'Email',
+    'auth.password': 'Palavra-passe', 'auth.name': 'Nome', 'auth.forgot': 'Esqueceu a senha?',
+    'auth.no_account': 'Não tem conta?', 'auth.has_account': 'Já tem conta?',
+    'auth.welcome': 'Bem-vindo de volta', 'auth.subtitle': 'Gerir as suas finanças pessoais',
+    'dash.greeting': 'Olá', 'dash.month_summary': 'Resumo do mês',
+    'dash.income': 'Receitas', 'dash.expense': 'Despesas', 'dash.balance': 'Saldo',
+    'dash.savings': 'Poupança', 'dash.recent': 'Transações recentes', 'dash.budgets': 'Orçamentos',
+    'tx.title': 'Transações', 'tx.subtitle': 'Histórico financeiro',
+    'tx.new': 'Nova Transação', 'tx.type': 'Tipo', 'tx.amount': 'Valor',
+    'tx.description': 'Descrição', 'tx.date': 'Data', 'tx.account': 'Conta',
+    'tx.category': 'Categoria', 'tx.method': 'Método', 'tx.notes': 'Notas',
+    'tx.income': 'Receita', 'tx.expense': 'Despesa', 'tx.delete_confirm': 'Eliminar esta transação?',
+    'acc.title': 'Contas', 'acc.subtitle': 'Gerir contas financeiras', 'acc.new': 'Nova Conta',
+    'acc.name': 'Nome', 'acc.type': 'Tipo', 'acc.currency': 'Moeda',
+    'acc.cash': 'Dinheiro', 'acc.bank': 'Banco', 'acc.mobile': 'Mobile Money',
+    'acc.savings': 'Poupança', 'acc.other': 'Outro', 'acc.delete_confirm': 'Eliminar esta conta?',
+    'cat.title': 'Categorias', 'cat.subtitle': 'Organizar receitas e despesas',
+    'cat.new': 'Nova Categoria', 'cat.incomes': 'Receitas', 'cat.expenses': 'Despesas',
+    'cat.color': 'Cor', 'cat.icon': 'Ícone', 'cat.default': 'Padrão',
+    'cat.delete_confirm': 'Eliminar esta categoria?',
+    'budget.title': 'Orçamentos', 'budget.subtitle': 'Controlar limites de gastos',
+    'budget.new': 'Novo Orçamento', 'budget.limit': 'Limite', 'budget.period': 'Período',
+    'budget.weekly': 'Semanal', 'budget.monthly': 'Mensal', 'budget.yearly': 'Anual',
+    'budget.start': 'Início', 'budget.end': 'Fim', 'budget.used': 'utilizado',
+    'budget.general': 'Geral (todas)', 'budget.delete_confirm': 'Eliminar este orçamento?',
+    'report.title': 'Relatórios', 'report.subtitle': 'Análise financeira detalhada',
+    'report.by_category': 'Por categoria', 'report.summary': 'Resumo',
+    'report.csv': 'Exportar CSV', 'report.pdf': 'Exportar PDF',
+    'settings.title': 'Definições', 'settings.subtitle': 'Personalizar a sua conta',
+    'settings.profile': 'Perfil', 'settings.security': 'Segurança',
+    'settings.language': 'Idioma', 'settings.theme': 'Tema',
+    'settings.current_pw': 'Palavra-passe actual', 'settings.new_pw': 'Nova palavra-passe',
+    'settings.confirm_pw': 'Confirmar palavra-passe', 'settings.change_pw': 'Alterar Palavra-passe',
+    'settings.save_profile': 'Guardar Perfil',
+    'toast.saved': 'Guardado com sucesso!', 'toast.deleted': 'Eliminado com sucesso!',
+    'toast.error': 'Ocorreu um erro.', 'toast.pw_changed': 'Palavra-passe alterada!',
+    'toast.pw_mismatch': 'As palavras-passe não coincidem.',
+    'confirm.delete_title': 'Confirmar Eliminação',
+    'confirm.delete_msg': 'Tem a certeza que deseja eliminar? Esta acção não pode ser revertida.',
+    'confirm.logout_title': 'Terminar Sessão', 'confirm.logout_msg': 'Deseja sair da sua conta?',
+  },
+  en: {
+    'nav.dashboard': 'Dashboard', 'nav.transactions': 'Transactions', 'nav.accounts': 'Accounts',
+    'nav.categories': 'Categories', 'nav.budgets': 'Budgets', 'nav.reports': 'Reports',
+    'nav.settings': 'Settings', 'nav.admin': 'Admin', 'nav.logout': 'Logout',
+    'common.save': 'Save', 'common.cancel': 'Cancel', 'common.create': 'Create',
+    'common.edit': 'Edit', 'common.delete': 'Delete', 'common.confirm': 'Confirm',
+    'common.yes': 'Yes', 'common.no': 'No', 'common.loading': 'Loading...',
+    'common.search': 'Search', 'common.filter': 'Filter', 'common.export': 'Export',
+    'common.new': 'New', 'common.all': 'All', 'common.none': 'None',
+    'auth.login': 'Sign In', 'auth.register': 'Sign Up', 'auth.email': 'Email',
+    'auth.password': 'Password', 'auth.name': 'Name', 'auth.forgot': 'Forgot password?',
+    'auth.no_account': "Don't have an account?", 'auth.has_account': 'Already have an account?',
+    'auth.welcome': 'Welcome back', 'auth.subtitle': 'Manage your personal finances',
+    'dash.greeting': 'Hello', 'dash.month_summary': 'Month summary',
+    'dash.income': 'Income', 'dash.expense': 'Expenses', 'dash.balance': 'Balance',
+    'dash.savings': 'Savings', 'dash.recent': 'Recent transactions', 'dash.budgets': 'Budgets',
+    'tx.title': 'Transactions', 'tx.subtitle': 'Financial history',
+    'tx.new': 'New Transaction', 'tx.type': 'Type', 'tx.amount': 'Amount',
+    'tx.description': 'Description', 'tx.date': 'Date', 'tx.account': 'Account',
+    'tx.category': 'Category', 'tx.method': 'Method', 'tx.notes': 'Notes',
+    'tx.income': 'Income', 'tx.expense': 'Expense', 'tx.delete_confirm': 'Delete this transaction?',
+    'acc.title': 'Accounts', 'acc.subtitle': 'Manage financial accounts', 'acc.new': 'New Account',
+    'acc.name': 'Name', 'acc.type': 'Type', 'acc.currency': 'Currency',
+    'acc.cash': 'Cash', 'acc.bank': 'Bank', 'acc.mobile': 'Mobile Money',
+    'acc.savings': 'Savings', 'acc.other': 'Other', 'acc.delete_confirm': 'Delete this account?',
+    'cat.title': 'Categories', 'cat.subtitle': 'Organize income and expenses',
+    'cat.new': 'New Category', 'cat.incomes': 'Income', 'cat.expenses': 'Expenses',
+    'cat.color': 'Color', 'cat.icon': 'Icon', 'cat.default': 'Default',
+    'cat.delete_confirm': 'Delete this category?',
+    'budget.title': 'Budgets', 'budget.subtitle': 'Control spending limits',
+    'budget.new': 'New Budget', 'budget.limit': 'Limit', 'budget.period': 'Period',
+    'budget.weekly': 'Weekly', 'budget.monthly': 'Monthly', 'budget.yearly': 'Yearly',
+    'budget.start': 'Start', 'budget.end': 'End', 'budget.used': 'used',
+    'budget.general': 'General (all)', 'budget.delete_confirm': 'Delete this budget?',
+    'report.title': 'Reports', 'report.subtitle': 'Detailed financial analysis',
+    'report.by_category': 'By category', 'report.summary': 'Summary',
+    'report.csv': 'Export CSV', 'report.pdf': 'Export PDF',
+    'settings.title': 'Settings', 'settings.subtitle': 'Customize your account',
+    'settings.profile': 'Profile', 'settings.security': 'Security',
+    'settings.language': 'Language', 'settings.theme': 'Theme',
+    'settings.current_pw': 'Current password', 'settings.new_pw': 'New password',
+    'settings.confirm_pw': 'Confirm password', 'settings.change_pw': 'Change Password',
+    'settings.save_profile': 'Save Profile',
+    'toast.saved': 'Saved successfully!', 'toast.deleted': 'Deleted successfully!',
+    'toast.error': 'An error occurred.', 'toast.pw_changed': 'Password changed!',
+    'toast.pw_mismatch': 'Passwords do not match.',
+    'confirm.delete_title': 'Confirm Deletion',
+    'confirm.delete_msg': 'Are you sure you want to delete? This action cannot be undone.',
+    'confirm.logout_title': 'Sign Out', 'confirm.logout_msg': 'Do you want to sign out?',
+  },
+  es: {
+    'nav.dashboard': 'Panel', 'nav.transactions': 'Transacciones', 'nav.accounts': 'Cuentas',
+    'nav.categories': 'Categorías', 'nav.budgets': 'Presupuestos', 'nav.reports': 'Informes',
+    'nav.settings': 'Ajustes', 'nav.admin': 'Admin', 'nav.logout': 'Salir',
+    'common.save': 'Guardar', 'common.cancel': 'Cancelar', 'common.create': 'Crear',
+    'common.edit': 'Editar', 'common.delete': 'Eliminar', 'common.confirm': 'Confirmar',
+    'common.yes': 'Sí', 'common.no': 'No', 'common.loading': 'Cargando...',
+    'auth.login': 'Iniciar sesión', 'auth.register': 'Registrarse',
+    'auth.welcome': 'Bienvenido', 'auth.subtitle': 'Gestiona tus finanzas personales',
+    'dash.greeting': 'Hola', 'dash.income': 'Ingresos', 'dash.expense': 'Gastos',
+    'dash.balance': 'Saldo', 'dash.savings': 'Ahorro',
+    'toast.saved': '¡Guardado!', 'toast.deleted': '¡Eliminado!', 'toast.error': 'Ocurrió un error.',
+    'confirm.delete_title': 'Confirmar eliminación',
+    'confirm.delete_msg': '¿Está seguro de que desea eliminar? Esta acción no se puede deshacer.',
+  },
+  fr: {
+    'nav.dashboard': 'Tableau de bord', 'nav.transactions': 'Transactions', 'nav.accounts': 'Comptes',
+    'nav.categories': 'Catégories', 'nav.budgets': 'Budgets', 'nav.reports': 'Rapports',
+    'nav.settings': 'Paramètres', 'nav.logout': 'Déconnexion',
+    'common.save': 'Enregistrer', 'common.cancel': 'Annuler', 'common.create': 'Créer',
+    'common.delete': 'Supprimer', 'common.yes': 'Oui', 'common.no': 'Non',
+    'auth.login': 'Se connecter', 'auth.register': "S'inscrire",
+    'auth.welcome': 'Bienvenue', 'auth.subtitle': 'Gérez vos finances personnelles',
+    'dash.greeting': 'Bonjour', 'dash.income': 'Revenus', 'dash.expense': 'Dépenses',
+    'dash.balance': 'Solde', 'dash.savings': 'Épargne',
+    'toast.saved': 'Enregistré !', 'toast.deleted': 'Supprimé !',
+    'confirm.delete_title': 'Confirmer la suppression',
+  },
+  ru: {
+    'nav.dashboard': 'Панель', 'nav.transactions': 'Транзакции', 'nav.accounts': 'Счета',
+    'nav.categories': 'Категории', 'nav.budgets': 'Бюджеты', 'nav.reports': 'Отчёты',
+    'nav.settings': 'Настройки', 'nav.logout': 'Выход',
+    'common.save': 'Сохранить', 'common.cancel': 'Отмена', 'common.create': 'Создать',
+    'common.delete': 'Удалить', 'common.yes': 'Да', 'common.no': 'Нет',
+    'auth.login': 'Войти', 'auth.register': 'Регистрация',
+    'auth.welcome': 'С возвращением', 'dash.greeting': 'Привет',
+    'dash.income': 'Доходы', 'dash.expense': 'Расходы', 'dash.balance': 'Баланс',
+    'toast.saved': 'Сохранено!', 'toast.deleted': 'Удалено!',
+  },
+  ja: {
+    'nav.dashboard': 'ダッシュボード', 'nav.transactions': '取引', 'nav.accounts': 'アカウント',
+    'nav.categories': 'カテゴリー', 'nav.budgets': '予算', 'nav.reports': 'レポート',
+    'nav.settings': '設定', 'nav.logout': 'ログアウト',
+    'common.save': '保存', 'common.cancel': 'キャンセル', 'common.create': '作成',
+    'common.delete': '削除', 'common.yes': 'はい', 'common.no': 'いいえ',
+    'auth.login': 'ログイン', 'auth.register': '登録',
+    'auth.welcome': 'おかえりなさい', 'dash.greeting': 'こんにちは',
+    'dash.income': '収入', 'dash.expense': '支出', 'dash.balance': '残高',
+    'toast.saved': '保存しました！', 'toast.deleted': '削除しました！',
+  },
+  it: {
+    'nav.dashboard': 'Pannello', 'nav.transactions': 'Transazioni', 'nav.accounts': 'Conti',
+    'nav.categories': 'Categorie', 'nav.budgets': 'Budget', 'nav.reports': 'Report',
+    'nav.settings': 'Impostazioni', 'nav.logout': 'Esci',
+    'common.save': 'Salva', 'common.cancel': 'Annulla', 'common.create': 'Crea',
+    'common.delete': 'Elimina', 'common.yes': 'Sì', 'common.no': 'No',
+    'auth.login': 'Accedi', 'auth.register': 'Registrati',
+    'auth.welcome': 'Bentornato', 'dash.greeting': 'Ciao',
+    'dash.income': 'Entrate', 'dash.expense': 'Spese', 'dash.balance': 'Saldo',
+    'toast.saved': 'Salvato!', 'toast.deleted': 'Eliminato!',
+  }
+};
+
+@Injectable({ providedIn: 'root' })
+export class I18nService {
+  private langSubject = new BehaviorSubject<string>('pt');
+  public lang$ = this.langSubject.asObservable();
+  public readonly languages = [
+    { code: 'pt', label: 'Português' },
+    { code: 'en', label: 'English' },
+    { code: 'es', label: 'Español' },
+    { code: 'fr', label: 'Français' },
+    { code: 'ru', label: 'Русский' },
+    { code: 'ja', label: '日本語' },
+    { code: 'it', label: 'Italiano' },
+  ];
+
+  constructor() {
+    const stored = localStorage.getItem('sgfp_lang');
+    if (stored) this.langSubject.next(stored);
+  }
+
+  get currentLang(): string { return this.langSubject.value; }
+
+  setLanguage(lang: string): void {
+    this.langSubject.next(lang);
+    localStorage.setItem('sgfp_lang', lang);
+  }
+
+  t(key: string): string {
+    const lang = this.currentLang;
+    return TRANSLATIONS[lang]?.[key] || TRANSLATIONS['pt']?.[key] || key;
+  }
+}

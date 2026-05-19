@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { I18nService } from '../../core/i18n.service';
 
 @Component({
   selector: 'app-login',
@@ -14,38 +15,26 @@ import { AuthService } from '../../core/auth.service';
 export class LoginComponent {
   email = '';
   password = '';
-  error = '';
   loading = false;
+  error = '';
+  emailTouched = false;
+  passwordTouched = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router, public i18n: I18nService) {}
+
+  get emailValid(): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email); }
+  get passwordValid(): boolean { return this.password.length >= 5; }
+  get canSubmit(): boolean { return this.emailValid && this.passwordValid && !this.loading; }
 
   onSubmit(): void {
-    if (!this.email || !this.password) {
-      this.error = 'Preencha todos os campos.';
-      return;
-    }
+    this.emailTouched = true;
+    this.passwordTouched = true;
+    if (!this.canSubmit) return;
     this.loading = true;
     this.error = '';
-
-    console.log('[LOGIN] Enviando login...', this.email);
-
-    this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: (res) => {
-        console.log('[LOGIN] Sucesso! Resposta:', res);
-        console.log('[LOGIN] Token guardado:', !!localStorage.getItem('sgfp_token'));
-        this.router.navigate(['/dashboard']).then(
-          (success) => console.log('[LOGIN] Navegação para dashboard:', success),
-          (err) => console.error('[LOGIN] Erro na navegação:', err)
-        );
-      },
-      error: (err) => {
-        console.error('[LOGIN] Erro no login:', err);
-        this.loading = false;
-        this.error = err.error?.message || 'Erro ao fazer login. Verifique as credenciais.';
-      },
-      complete: () => {
-        console.log('[LOGIN] Observable completo');
-      }
+    this.auth.login({ email: this.email, password: this.password }).subscribe({
+      next: () => { this.loading = false; this.router.navigate(['/dashboard']); },
+      error: (e) => { this.loading = false; this.error = e.error?.message || 'Erro de autenticação'; }
     });
   }
 }

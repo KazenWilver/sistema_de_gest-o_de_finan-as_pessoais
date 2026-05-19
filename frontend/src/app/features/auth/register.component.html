@@ -1,39 +1,50 @@
 <div class="auth-page">
-  <div class="auth-card">
-    <div class="auth-header">
-      <div class="auth-logo">💰</div>
-      <h1 class="auth-title">Criar Conta</h1>
-      <p class="auth-subtitle">Junte-se ao SGFP e organize suas finanças</p>
-    </div>
-
-    <form (ngSubmit)="onSubmit()" class="auth-form">
-      <div class="form-group">
-        <label class="form-label" for="name">Nome</label>
-        <input class="form-input" id="name" type="text" [(ngModel)]="name" name="name"
-               placeholder="Seu nome completo" autocomplete="name">
+  <div class="auth-hero">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1 class="auth-title">SGFP</h1>
+        <p class="auth-subtitle">Criar nova conta</p>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" for="email">Email</label>
-        <input class="form-input" id="email" type="email" [(ngModel)]="email" name="email"
-               placeholder="seu@email.com" autocomplete="email">
-      </div>
+      <form (ngSubmit)="onSubmit()" class="auth-form">
+        <div class="form-group">
+          <label class="form-label">{{ i18n.t('auth.name') }}</label>
+          <input class="form-input" type="text" [(ngModel)]="name" name="name"
+                 [class.error]="touched['name'] && !nameValid"
+                 [class.success]="touched['name'] && nameValid"
+                 (blur)="touched['name']=true" placeholder="Seu nome" autocomplete="name">
+          <span class="form-error" *ngIf="touched['name'] && !nameValid">Mínimo 2 caracteres</span>
+        </div>
 
-      <div class="form-group">
-        <label class="form-label" for="password">Password</label>
-        <input class="form-input" id="password" type="password" [(ngModel)]="password" name="password"
-               placeholder="Mínimo 6 caracteres" autocomplete="new-password">
-      </div>
+        <div class="form-group">
+          <label class="form-label">{{ i18n.t('auth.email') }}</label>
+          <input class="form-input" type="email" [(ngModel)]="email" name="email"
+                 [class.error]="touched['email'] && !emailValid"
+                 [class.success]="touched['email'] && emailValid"
+                 (blur)="touched['email']=true" placeholder="exemplo@email.com" autocomplete="email">
+          <span class="form-error" *ngIf="touched['email'] && !emailValid">Email inválido</span>
+        </div>
 
-      <div class="form-error" *ngIf="error">{{ error }}</div>
+        <div class="form-group">
+          <label class="form-label">{{ i18n.t('auth.password') }}</label>
+          <input class="form-input" type="password" [(ngModel)]="password" name="password"
+                 [class.error]="touched['password'] && !passwordValid"
+                 [class.success]="touched['password'] && passwordValid"
+                 (blur)="touched['password']=true" placeholder="••••••" autocomplete="new-password">
+          <span class="form-error" *ngIf="touched['password'] && !passwordValid">Mínimo 5 caracteres</span>
+        </div>
 
-      <button class="btn btn-primary btn-lg auth-submit" type="submit" [disabled]="loading">
-        {{ loading ? 'A criar...' : 'Criar Conta' }}
-      </button>
-    </form>
+        <div class="form-error auth-error" *ngIf="error">{{ error }}</div>
 
-    <div class="auth-footer">
-      <p>Já tem conta? <a routerLink="/auth/login">Entrar</a></p>
+        <button class="btn btn-primary btn-lg auth-submit" type="submit" [disabled]="!canSubmit">
+          <span *ngIf="!loading">{{ i18n.t('auth.register') }}</span>
+          <span *ngIf="loading">{{ i18n.t('common.loading') }}</span>
+        </button>
+
+        <div class="auth-links">
+          <span class="auth-link-text">{{ i18n.t('auth.has_account') }} <a routerLink="/auth/login" class="auth-link">{{ i18n.t('auth.login') }}</a></span>
+        </div>
+      </form>
     </div>
   </div>
 </div>

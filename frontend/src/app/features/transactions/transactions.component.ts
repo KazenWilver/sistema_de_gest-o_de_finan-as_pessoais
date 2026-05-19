@@ -1,7 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/api.service';
+import { I18nService } from '../../core/i18n.service';
+import { ToastService } from '../../core/toast.service';
+import { ConfirmService } from '../../core/confirm.service';
 import { Transaction, Account, Category } from '../../core/models';
 
 @Component({
@@ -20,23 +24,27 @@ export class TransactionsComponent implements OnInit {
   limit = 15;
   showModal = false;
   editMode = false;
-  loading = false;
+  loading = true;
+  saving = false;
 
-  // Filters
   filterType = '';
   filterCategory = '';
   filterFrom = '';
   filterTo = '';
 
-  // Form
   form: any = { type: 'expense', amount: null, description: '', transaction_date: '', account_id: null, category_id: null, payment_method: '', notes: '' };
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService) {}
 
   ngOnInit(): void {
-    this.loadData();
-    this.api.getAccounts().subscribe(d => this.accounts = d);
-    this.api.getCategories().subscribe(d => this.categories = d);
+    forkJoin({
+      accounts: this.api.getAccounts(),
+      categories: this.api.getCategories()
+    }).subscribe(data => {
+      this.accounts = data.accounts;
+      this.categories = data.categories;
+      this.loadData();
+    });
   }
 
   loadData(): void {
@@ -47,14 +55,14 @@ export class TransactionsComponent implements OnInit {
     if (this.filterFrom) filters.from = this.filterFrom;
     if (this.filterTo) filters.to = this.filterTo;
 
-    this.api.getTransactions(filters).subscribe(res => {
-      this.transactions = res.transactions;
-      this.total = res.total;
-      this.loading = false;
+    this.api.getTransactions(filters).subscribe({
+      next: res => { this.transactions = res.transactions; this.total = res.total; this.loading = false; },
+      error: () => { this.loading = false; }
     });
   }
 
   applyFilter(): void { this.page = 1; this.loadData(); }
+  clearFilters(): void { this.filterType = ''; this.filterCategory = ''; this.filterFrom = ''; this.filterTo = ''; this.applyFilter(); }
 
   openCreate(): void {
     this.editMode = false;
@@ -69,38 +77,29 @@ export class TransactionsComponent implements OnInit {
   }
 
   save(): void {
-    if (this.editMode) {
-      this.api.updateTransaction(this.form.id, this.form).subscribe(() => { this.showModal = false; this.loadData(); });
-    } else {
-      this.api.createTransaction(this.form).subscribe(() => { this.showModal = false; this.loadData(); });
-    }
+    this.saving = true;
+    const obs = this.editMode ? this.api.updateTransaction(this.form.id, this.form) : this.api.createTransaction(this.form);
+    obs.subscribe({
+      next: () => { this.saving = false; this.showModal = false; this.loadData(); this.toast.success(this.i18n.t('toast.saved')); },
+      error: () => { this.saving = false; this.toast.error(this.i18n.t('toast.error')); }
+    });
   }
 
-  delete(id: number): void {
-    if (confirm('Eliminar esta transação?')) {
-      this.api.deleteTransaction(id).subscribe(() => this.loadData());
-    }
+  async delete(id: number): Promise<void> {
+    const ok = await this.confirm.confirm({ title: this.i18n.t('confirm.delete_title'), message: this.i18n.t('tx.delete_confirm'), type: 'danger', confirmText: this.i18n.t('common.delete') });
+    if (ok) this.api.deleteTransaction(id).subscribe({ next: () => { this.loadData(); this.toast.success(this.i18n.t('toast.deleted')); }, error: () => this.toast.error(this.i18n.t('toast.error')) });
   }
 
-  get filteredCategories(): Category[] {
-    return this.categories.filter(c => !this.form.type || c.type === this.form.type);
-  }
-
+  get filteredCategories(): Category[] { return this.categories.filter(c => !this.form.type || c.type === this.form.type); }
   get totalPages(): number { return Math.ceil(this.total / this.limit); }
-
   nextPage(): void { if (this.page < this.totalPages) { this.page++; this.loadData(); } }
   prevPage(): void { if (this.page > 1) { this.page--; this.loadData(); } }
 
-  formatCurrency(val: number): string {
-    return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(val);
-  }
+  formatCurrency(val: number): string { return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', minimumFractionDigits: 0 }).format(val); }
 
   exportCsv(): void {
     this.api.exportCsv({ from: this.filterFrom, to: this.filterTo, type: this.filterType }).subscribe(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'transacoes.csv'; a.click();
-      URL.revokeObjectURL(url);
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'transacoes.csv'; a.click(); URL.revokeObjectURL(a.href);
     });
   }
 }

@@ -152,4 +152,16 @@ export class ApiService {
   getAdminStats(): Observable<any> {
     return this.http.get<ApiResponse<any>>(`${this.url}/admin/stats`).pipe(map(r => r.data));
   }
+  getUsers(): Observable<any[]> {
+    return this.getAdminUsers();
+  }
+  updateUserRole(id: number, role: string): Observable<any> {
+    return this.http.put<ApiResponse<any>>(`${this.url}/admin/users/${id}/role`, { role }).pipe(map(r => r.data));
+  }
+  toggleUserActive(id: number): Observable<any> {
+    return this.http.put<ApiResponse<any>>(`${this.url}/admin/users/${id}/toggle-active`, {}).pipe(map(r => r.data));
+  }
+  deleteUser(id: number): Observable<any> {
+    return this.http.delete(`${this.url}/admin/users/${id}`);
+  }
 }

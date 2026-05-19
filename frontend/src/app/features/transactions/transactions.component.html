@@ -1,123 +1,122 @@
 <div class="page-container">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Transações</h1>
-      <p class="page-subtitle">{{ total }} transações encontradas</p>
+      <h1 class="page-title">{{ i18n.t('tx.title') }}</h1>
+      <p class="page-subtitle">{{ i18n.t('tx.subtitle') }}</p>
     </div>
-    <div class="page-actions">
-      <button class="btn btn-secondary btn-sm" (click)="exportCsv()">📥 Exportar CSV</button>
-      <button class="btn btn-primary" (click)="openCreate()">+ Nova Transação</button>
+    <div class="flex gap-xs">
+      <button class="btn btn-secondary" (click)="exportCsv()">{{ i18n.t('report.csv') }}</button>
+      <button class="btn btn-primary" (click)="openCreate()">+ {{ i18n.t('tx.new') }}</button>
     </div>
   </div>
 
   <!-- Filters -->
-  <div class="card filter-bar">
-    <select class="form-select" [(ngModel)]="filterType" (change)="applyFilter()">
-      <option value="">Todos os tipos</option>
-      <option value="income">Receita</option>
-      <option value="expense">Despesa</option>
+  <div class="filter-bar">
+    <select class="form-select filter-select" [(ngModel)]="filterType" (change)="applyFilter()">
+      <option value="">{{ i18n.t('common.all') }} {{ i18n.t('tx.type') }}</option>
+      <option value="income">{{ i18n.t('tx.income') }}</option>
+      <option value="expense">{{ i18n.t('tx.expense') }}</option>
     </select>
-    <input type="date" class="form-input" [(ngModel)]="filterFrom" (change)="applyFilter()" placeholder="De">
-    <input type="date" class="form-input" [(ngModel)]="filterTo" (change)="applyFilter()" placeholder="Até">
+    <select class="form-select filter-select" [(ngModel)]="filterCategory" (change)="applyFilter()">
+      <option value="">{{ i18n.t('common.all') }} {{ i18n.t('tx.category') }}</option>
+      @for (c of categories; track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+    </select>
+    <input class="form-input filter-date" type="date" [(ngModel)]="filterFrom" (change)="applyFilter()" placeholder="De">
+    <input class="form-input filter-date" type="date" [(ngModel)]="filterTo" (change)="applyFilter()" placeholder="Até">
+    <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="filterType || filterCategory || filterFrom || filterTo">✕ Limpar</button>
   </div>
 
   <!-- Table -->
-  <div class="card" style="padding:0">
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th>Descrição</th>
-            <th>Categoria</th>
-            <th>Conta</th>
-            <th>Valor</th>
-            <th>Ações</th>
+  <div class="table-container" *ngIf="!loading && transactions.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ i18n.t('tx.date') }}</th>
+          <th>{{ i18n.t('tx.description') }}</th>
+          <th>{{ i18n.t('tx.category') }}</th>
+          <th>{{ i18n.t('tx.account') }}</th>
+          <th class="text-right">{{ i18n.t('tx.amount') }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (tx of transactions; track tx.id; let i = $index) {
+          <tr class="row-animate" [style.animation-delay]="i * 30 + 'ms'">
+            <td class="caption">{{ tx.transaction_date }}</td>
+            <td><span class="fw-700">{{ tx.description }}</span></td>
+            <td><span class="badge" [ngClass]="tx.type === 'income' ? 'badge-income' : 'badge-expense'">{{ tx.category_name || '-' }}</span></td>
+            <td class="caption">{{ tx.account_name || '-' }}</td>
+            <td class="text-right fw-700" [class.text-success]="tx.type==='income'" [class.text-error]="tx.type==='expense'">
+              {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+            </td>
+            <td class="text-right">
+              <button class="btn btn-ghost btn-sm" (click)="openEdit(tx)">✏️</button>
+              <button class="btn btn-ghost btn-sm" (click)="delete(tx.id)">🗑️</button>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          @for (tx of transactions; track tx.id) {
-            <tr>
-              <td>{{ tx.transaction_date }}</td>
-              <td><strong>{{ tx.description }}</strong></td>
-              <td>
-                <span class="badge" [class.badge-income]="tx.type==='income'" [class.badge-expense]="tx.type==='expense'">
-                  {{ tx.category_name }}
-                </span>
-              </td>
-              <td>{{ tx.account_name }}</td>
-              <td [class.income]="tx.type==='income'" [class.expense]="tx.type==='expense'" style="font-weight:600">
-                {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
-              </td>
-              <td>
-                <button class="btn btn-ghost btn-sm" (click)="openEdit(tx)">✏️</button>
-                <button class="btn btn-ghost btn-sm" (click)="delete(tx.id)">🗑️</button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+        }
+      </tbody>
+    </table>
+  </div>
 
-    <div *ngIf="transactions.length === 0" class="empty-state">
-      <p class="empty-state-text">Nenhuma transação encontrada</p>
-    </div>
+  <!-- Loading -->
+  <div *ngIf="loading" class="skeleton-table">
+    <div class="skeleton" style="height:48px;margin-bottom:8px" *ngFor="let i of [1,2,3,4,5]"></div>
+  </div>
+
+  <!-- Empty -->
+  <div class="empty-state" *ngIf="!loading && transactions.length === 0">
+    <div class="empty-state-icon">📋</div>
+    <p class="empty-state-text">Sem transações</p>
+    <p class="empty-state-hint">Clique em "+ Nova Transação" para começar</p>
   </div>
 
   <!-- Pagination -->
   <div class="pagination" *ngIf="totalPages > 1">
-    <button class="btn btn-ghost btn-sm" (click)="prevPage()" [disabled]="page === 1">← Anterior</button>
-    <span class="page-info">Página {{ page }} de {{ totalPages }}</span>
-    <button class="btn btn-ghost btn-sm" (click)="nextPage()" [disabled]="page >= totalPages">Seguinte →</button>
+    <button class="btn btn-secondary btn-sm" (click)="prevPage()" [disabled]="page <= 1">← Anterior</button>
+    <span class="caption">{{ page }} / {{ totalPages }}</span>
+    <button class="btn btn-secondary btn-sm" (click)="nextPage()" [disabled]="page >= totalPages">Próxima →</button>
   </div>
 
   <!-- Modal -->
   <div class="modal-backdrop" *ngIf="showModal" (click)="showModal = false">
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3 class="modal-title">{{ editMode ? 'Editar' : 'Nova' }} Transação</h3>
+        <h3 class="modal-title">{{ editMode ? i18n.t('common.edit') : i18n.t('tx.new') }}</h3>
         <button class="modal-close" (click)="showModal = false">✕</button>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">Tipo</label>
-        <select class="form-select" [(ngModel)]="form.type">
-          <option value="income">Receita</option>
-          <option value="expense">Despesa</option>
-        </select>
+      <div class="form-group"><label class="form-label">{{ i18n.t('tx.type') }}</label>
+        <select class="form-select" [(ngModel)]="form.type"><option value="income">{{ i18n.t('tx.income') }}</option><option value="expense">{{ i18n.t('tx.expense') }}</option></select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Valor</label>
-        <input class="form-input" type="number" [(ngModel)]="form.amount" placeholder="0.00" min="0.01" step="0.01">
+      <div class="form-group"><label class="form-label">{{ i18n.t('tx.amount') }}</label>
+        <input class="form-input" type="number" [(ngModel)]="form.amount" min="0">
       </div>
-      <div class="form-group">
-        <label class="form-label">Descrição</label>
-        <input class="form-input" [(ngModel)]="form.description" placeholder="Descrição da transação">
+      <div class="form-group"><label class="form-label">{{ i18n.t('tx.description') }}</label>
+        <input class="form-input" [(ngModel)]="form.description">
       </div>
-      <div class="form-group">
-        <label class="form-label">Data</label>
+      <div class="form-group"><label class="form-label">{{ i18n.t('tx.date') }}</label>
         <input class="form-input" type="date" [(ngModel)]="form.transaction_date">
       </div>
-      <div class="form-group">
-        <label class="form-label">Conta</label>
+      <div class="form-group"><label class="form-label">{{ i18n.t('tx.account') }}</label>
         <select class="form-select" [(ngModel)]="form.account_id">
           @for (a of accounts; track a.id) { <option [value]="a.id">{{ a.name }}</option> }
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Categoria</label>
+      <div class="form-group"><label class="form-label">{{ i18n.t('tx.category') }}</label>
         <select class="form-select" [(ngModel)]="form.category_id">
+          <option [ngValue]="null">-</option>
           @for (c of filteredCategories; track c.id) { <option [value]="c.id">{{ c.name }}</option> }
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label">Método de Pagamento</label>
-        <input class="form-input" [(ngModel)]="form.payment_method" placeholder="Ex: multicaixa, cash">
+      <div class="form-group"><label class="form-label">{{ i18n.t('tx.method') }}</label>
+        <input class="form-input" [(ngModel)]="form.payment_method" placeholder="Ex: Transferência, Dinheiro">
       </div>
-
+      <div class="form-group"><label class="form-label">{{ i18n.t('tx.notes') }}</label>
+        <textarea class="form-input" [(ngModel)]="form.notes" rows="2"></textarea>
+      </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" (click)="showModal = false">Cancelar</button>
-        <button class="btn btn-primary" (click)="save()">{{ editMode ? 'Guardar' : 'Criar' }}</button>
+        <button class="btn btn-secondary" (click)="showModal = false">{{ i18n.t('common.cancel') }}</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving">{{ saving ? i18n.t('common.loading') : (editMode ? i18n.t('common.save') : i18n.t('common.create')) }}</button>
       </div>
     </div>
   </div>

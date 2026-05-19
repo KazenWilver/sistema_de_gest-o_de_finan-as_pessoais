@@ -1,98 +1,87 @@
-<div class="page-container">
-  <!-- Header -->
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Olá, {{ userName }} 👋</h1>
-      <p class="page-subtitle">Resumo financeiro de {{ currentMonth }}</p>
-    </div>
+<div class="hero-band">
+  <div class="hero-inner">
+    <h1 class="hero-title">{{ i18n.t('dash.greeting') }}, {{ userName }}.</h1>
+    <p class="hero-subtitle">{{ currentMonth | titlecase }} · {{ i18n.t('dash.month_summary') }}</p>
   </div>
+</div>
 
+<div class="page-container dash-content">
   <!-- Summary Cards -->
-  <div class="grid grid-4 summary-grid">
+  <div class="grid grid-4 summary-grid" *ngIf="!loading">
     <div class="card summary-card">
-      <div class="summary-label">Saldo</div>
-      <div class="summary-value" [class.positive]="summary.balance >= 0" [class.negative]="summary.balance < 0">
-        {{ formatCurrency(summary.balance) }}
-      </div>
-      <div class="summary-meta">Este mês</div>
+      <div class="summary-label">{{ i18n.t('dash.income') }}</div>
+      <div class="summary-value text-success">{{ formatCurrency(summary.income) }}</div>
+      <div class="summary-icon">↑</div>
     </div>
     <div class="card summary-card">
-      <div class="summary-label">Receitas</div>
-      <div class="summary-value income">{{ formatCurrency(summary.income) }}</div>
-      <div class="summary-indicator income">↑ Entradas</div>
+      <div class="summary-label">{{ i18n.t('dash.expense') }}</div>
+      <div class="summary-value text-error">{{ formatCurrency(summary.expense) }}</div>
+      <div class="summary-icon">↓</div>
     </div>
     <div class="card summary-card">
-      <div class="summary-label">Despesas</div>
-      <div class="summary-value expense">{{ formatCurrency(summary.expense) }}</div>
-      <div class="summary-indicator expense">↓ Saídas</div>
+      <div class="summary-label">{{ i18n.t('dash.balance') }}</div>
+      <div class="summary-value">{{ formatCurrency(summary.balance) }}</div>
+      <div class="summary-icon">≡</div>
     </div>
     <div class="card summary-card">
-      <div class="summary-label">Taxa de Poupança</div>
-      <div class="summary-value">{{ summary.savings_rate }}%</div>
-      <div class="progress-bar" style="margin-top: 8px">
-        <div class="progress-fill" [style.width.%]="summary.savings_rate" [style.background]="summary.savings_rate >= 20 ? 'var(--color-success)' : 'var(--color-warning)'"></div>
-      </div>
+      <div class="summary-label">{{ i18n.t('dash.savings') }}</div>
+      <div class="summary-value" [class.text-success]="summary.savings_rate > 0">{{ summary.savings_rate }}%</div>
+      <div class="summary-icon">◎</div>
     </div>
   </div>
 
-  <div class="dashboard-grid">
+  <!-- Loading skeleton -->
+  <div class="grid grid-4 summary-grid" *ngIf="loading">
+    <div class="card" *ngFor="let i of [1,2,3,4]"><div class="skeleton" style="height:80px"></div></div>
+  </div>
+
+  <div class="dash-grid">
     <!-- Recent Transactions -->
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Transações Recentes</h2>
-        <a routerLink="/transactions" class="btn btn-ghost btn-sm">Ver todas →</a>
+        <h2 class="card-title">{{ i18n.t('dash.recent') }}</h2>
+        <a routerLink="/transactions" class="btn-text-link">Ver todos →</a>
       </div>
-
-      <div *ngIf="recentTransactions.length === 0" class="empty-state">
-        <p class="empty-state-text">Nenhuma transação ainda</p>
-        <a routerLink="/transactions" class="btn btn-primary btn-sm">Adicionar primeira</a>
+      <div class="table-container" *ngIf="recentTransactions.length > 0">
+        <table>
+          <thead><tr><th>{{ i18n.t('tx.description') }}</th><th>{{ i18n.t('tx.category') }}</th><th class="text-right">{{ i18n.t('tx.amount') }}</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let tx of recentTransactions; let i = index" [style.animation-delay]="i * 50 + 'ms'" class="row-animate">
+              <td><span class="fw-700">{{ tx.description }}</span><br><span class="caption">{{ tx.transaction_date }}</span></td>
+              <td><span class="badge" [ngClass]="tx.type === 'income' ? 'badge-income' : 'badge-expense'">{{ tx.category_name || '-' }}</span></td>
+              <td class="text-right fw-700" [class.text-success]="tx.type==='income'" [class.text-error]="tx.type==='expense'">
+                {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-
-      <div class="tx-list">
-        @for (tx of recentTransactions; track tx.id) {
-          <div class="tx-item">
-            <div class="tx-icon" [style.background]="tx.category_color + '18'" [style.color]="tx.category_color">
-              {{ tx.category_icon || '●' }}
-            </div>
-            <div class="tx-info">
-              <div class="tx-desc">{{ tx.description }}</div>
-              <div class="tx-meta">{{ tx.category_name }} · {{ tx.transaction_date }}</div>
-            </div>
-            <div class="tx-amount" [class.income]="tx.type === 'income'" [class.expense]="tx.type === 'expense'">
-              {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
-            </div>
-          </div>
-        }
+      <div class="empty-state" *ngIf="recentTransactions.length === 0 && !loading">
+        <p class="empty-state-text">Sem transações recentes</p>
       </div>
     </div>
 
-    <!-- Budget Progress -->
+    <!-- Budgets -->
     <div class="card">
       <div class="card-header">
-        <h2 class="card-title">Orçamentos Ativos</h2>
-        <a routerLink="/budgets" class="btn btn-ghost btn-sm">Gerir →</a>
+        <h2 class="card-title">{{ i18n.t('dash.budgets') }}</h2>
+        <a routerLink="/budgets" class="btn-text-link">Ver todos →</a>
       </div>
-
-      <div *ngIf="budgets.length === 0" class="empty-state">
-        <p class="empty-state-text">Nenhum orçamento activo</p>
-        <a routerLink="/budgets" class="btn btn-primary btn-sm">Criar orçamento</a>
-      </div>
-
-      @for (b of budgets; track b.id) {
-        <div class="budget-item">
-          <div class="budget-header">
-            <span class="budget-name">{{ b.name }}</span>
-            <span class="budget-values">{{ formatCurrency(b.spent || 0) }} / {{ formatCurrency(b.limit_amount) }}</span>
+      <div class="budget-list" *ngIf="budgets.length > 0">
+        <div class="budget-item" *ngFor="let b of budgets">
+          <div class="flex-between">
+            <span class="title-sm">{{ b.name }}</span>
+            <span class="caption" [style.color]="getBudgetColor(b.percentage || 0)">{{ b.percentage || 0 }}%</span>
           </div>
-          <div class="progress-bar">
-            <div class="progress-fill" [style.width.%]="b.percentage || 0"
-                 [style.background]="getBudgetColor(b.percentage || 0)"></div>
+          <div class="progress-bar" style="margin-top:8px">
+            <div class="progress-fill" [style.width.%]="Math.min(b.percentage || 0, 100)" [style.background]="getBudgetColor(b.percentage || 0)"></div>
           </div>
-          <div class="budget-pct" [style.color]="getBudgetColor(b.percentage || 0)">
-            {{ b.percentage || 0 }}% utilizado
-          </div>
+          <div class="caption mt-sm">{{ formatCurrency(b.spent || 0) }} / {{ formatCurrency(b.limit_amount) }}</div>
         </div>
-      }
+      </div>
+      <div class="empty-state" *ngIf="budgets.length === 0 && !loading">
+        <p class="empty-state-text">Sem orçamentos</p>
+      </div>
     </div>
   </div>
 </div>

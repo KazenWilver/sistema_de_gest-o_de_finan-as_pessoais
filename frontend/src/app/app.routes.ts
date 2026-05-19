@@ -9,6 +9,7 @@ export const routes: Routes = [
     children: [
       { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
       { path: 'register', loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent) },
+      { path: 'forgot-password', loadComponent: () => import('./features/auth/forgot-password.component').then(m => m.ForgotPasswordComponent) },
       { path: '', redirectTo: 'login', pathMatch: 'full' }
     ]
   },
