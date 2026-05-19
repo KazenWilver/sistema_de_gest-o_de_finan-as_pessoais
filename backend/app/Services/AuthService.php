@@ -41,7 +41,7 @@ class AuthService
         $userId = $this->userRepo->create([
             'name'          => $data['name'],
             'email'         => $data['email'],
-            'password_hash' => password_hash($data['password'], PASSWORD_BCRYPT),
+            'password_hash' => password_hash($data['password'], PASSWORD_BCRYPT, ['cost' => 10]),
         ]);
 
         // Create default categories
@@ -131,7 +131,7 @@ class AuthService
             Response::error('Password actual incorrecta.', 401);
         }
 
-        $this->userRepo->updatePassword($userId, password_hash($data['new_password'], PASSWORD_BCRYPT));
+        $this->userRepo->updatePassword($userId, password_hash($data['new_password'], PASSWORD_BCRYPT, ['cost' => 10]));
     }
 
     /**
@@ -179,7 +179,7 @@ class AuthService
 
         $this->userRepo->updatePassword(
             $resetRecord['user_id'],
-            password_hash($data['password'], PASSWORD_BCRYPT)
+            password_hash($data['password'], PASSWORD_BCRYPT, ['cost' => 10])
         );
         $this->userRepo->markTokenUsed($resetRecord['id']);
     }
