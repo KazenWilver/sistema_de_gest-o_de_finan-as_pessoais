@@ -4,11 +4,11 @@
 
 -- Admin user (password: admin123)
 INSERT INTO `users` (`name`, `email`, `password_hash`, `role`, `currency`, `language`, `theme`) VALUES
-('Administrador', 'admin@sgfp.ao', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'AOA', 'pt', 'light');
+('Administrador', 'admin@sgfp.ao', '$2y$12$dGccJAqo1vDjEjgg8J52lul7iO1ygUKsYDhCsQ4IAUIbAjhdR0YOq', 'admin', 'AOA', 'pt', 'light');
 
 -- Demo user (password: user1234)
 INSERT INTO `users` (`name`, `email`, `password_hash`, `role`, `currency`, `language`, `theme`) VALUES
-('Utilizador Demo', 'demo@sgfp.ao', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'user', 'AOA', 'pt', 'light');
+('Utilizador Demo', 'demo@sgfp.ao', '$2y$12$dGccJAqo1vDjEjgg8J52lul7iO1ygUKsYDhCsQ4IAUIbAjhdR0YOq', 'user', 'AOA', 'pt', 'light');
 
 -- Default account for admin (user_id=1)
 INSERT INTO `accounts` (`user_id`, `name`, `type`, `currency`) VALUES
