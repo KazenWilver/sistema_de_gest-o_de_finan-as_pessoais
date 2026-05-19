@@ -107,7 +107,7 @@ class UserRepository
     public function findAll(): array
     {
         $stmt = $this->db->query(
-            'SELECT u.id, u.name, u.email, u.role, u.currency, u.language, u.created_at,
+            'SELECT u.id, u.name, u.email, u.role, u.currency, u.language, u.is_active, u.created_at,
                     (SELECT COUNT(*) FROM transactions t WHERE t.user_id = u.id) as transaction_count
              FROM users u ORDER BY u.created_at DESC'
         );
@@ -118,5 +118,23 @@ class UserRepository
     {
         $stmt = $this->db->query('SELECT COUNT(*) as total FROM users');
         return (int) $stmt->fetch()['total'];
+    }
+
+    public function updateRole(int $id, string $role): bool
+    {
+        $stmt = $this->db->prepare('UPDATE users SET role = :role WHERE id = :id');
+        return $stmt->execute(['role' => $role, 'id' => $id]);
+    }
+
+    public function updateActive(int $id, int $active): bool
+    {
+        $stmt = $this->db->prepare('UPDATE users SET is_active = :active WHERE id = :id');
+        return $stmt->execute(['active' => $active, 'id' => $id]);
+    }
+
+    public function delete(int $id): bool
+    {
+        $stmt = $this->db->prepare('DELETE FROM users WHERE id = :id');
+        return $stmt->execute(['id' => $id]);
     }
 }

@@ -65,5 +65,8 @@ $router->put ('api/settings/theme',      'SettingsController',   'updateTheme', 
 $router->put ('api/settings/password',   'SettingsController',   'updatePassword',  ['auth']);
 
 // Admin
-$router->get ('api/admin/users',         'AdminController',      'users',           ['auth', 'admin']);
-$router->get ('api/admin/stats',         'AdminController',      'stats',           ['auth', 'admin']);
+$router->get ('api/admin/users',                  'AdminController',      'users',           ['auth', 'admin']);
+$router->get ('api/admin/stats',                  'AdminController',      'stats',           ['auth', 'admin']);
+$router->put ('api/admin/users/:id/role',         'AdminController',      'updateRole',      ['auth', 'admin']);
+$router->put ('api/admin/users/:id/toggle-active','AdminController',      'toggleActive',    ['auth', 'admin']);
+$router->delete('api/admin/users/:id',            'AdminController',      'deleteUser',      ['auth', 'admin']);
