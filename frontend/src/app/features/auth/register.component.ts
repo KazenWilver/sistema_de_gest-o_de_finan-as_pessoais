@@ -19,6 +19,7 @@ export class RegisterComponent {
   loading = false;
   error = '';
   touched: Record<string, boolean> = {};
+  shakeError = false;
 
   constructor(private auth: AuthService, private router: Router, public i18n: I18nService) {}
 
@@ -29,12 +30,24 @@ export class RegisterComponent {
 
   onSubmit(): void {
     this.touched = { name: true, email: true, password: true };
-    if (!this.canSubmit) return;
+    if (!this.canSubmit) {
+      this.triggerShake();
+      return;
+    }
     this.loading = true;
     this.error = '';
     this.auth.register({ name: this.name, email: this.email, password: this.password }).subscribe({
       next: () => { this.loading = false; this.router.navigate(['/dashboard']); },
-      error: (e) => { this.loading = false; this.error = e.error?.message || 'Erro no registo'; }
+      error: (e) => {
+        this.loading = false;
+        this.error = e.error?.message || this.i18n.t('toast.error');
+        this.triggerShake();
+      }
     });
+  }
+
+  private triggerShake(): void {
+    this.shakeError = true;
+    setTimeout(() => this.shakeError = false, 600);
   }
 }

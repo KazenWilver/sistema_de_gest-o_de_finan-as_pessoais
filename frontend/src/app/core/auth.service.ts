@@ -35,13 +35,13 @@ export class AuthService {
 
   register(data: { name: string; email: string; password: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, data).pipe(
-      tap(res => this.storeAuth(res.data))
+      tap(res => { if (res.data?.token) this.storeAuth(res.data); })
     );
   }
 
   login(data: { email: string; password: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, data).pipe(
-      tap(res => this.storeAuth(res.data))
+      tap(res => { if (res.data?.token) this.storeAuth(res.data); })
     );
   }
 

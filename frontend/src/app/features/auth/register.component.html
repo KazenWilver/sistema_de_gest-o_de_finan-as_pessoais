@@ -1,6 +1,6 @@
 <div class="auth-page">
   <div class="auth-hero">
-    <div class="auth-card">
+    <div class="auth-card" [class.shake]="shakeError">
       <div class="auth-header">
         <h1 class="auth-title">SGFP</h1>
         <p class="auth-subtitle">{{ i18n.t('auth.register') }}</p>

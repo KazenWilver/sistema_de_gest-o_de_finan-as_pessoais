@@ -20,6 +20,7 @@ CREATE TABLE `users` (
     `currency`      VARCHAR(10)   NOT NULL DEFAULT 'AOA',
     `language`      VARCHAR(5)    NOT NULL DEFAULT 'pt',
     `theme`         VARCHAR(10)   NOT NULL DEFAULT 'light',
+    `is_active`     TINYINT(1)    NOT NULL DEFAULT 1,
     `created_at`    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     `updated_at`    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
