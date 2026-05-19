@@ -23,7 +23,7 @@
     </select>
     <input class="form-input filter-date" type="date" [(ngModel)]="filterFrom" (change)="applyFilter()" placeholder="De">
     <input class="form-input filter-date" type="date" [(ngModel)]="filterTo" (change)="applyFilter()" placeholder="Até">
-    <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="filterType || filterCategory || filterFrom || filterTo">✕ Limpar</button>
+    <button class="btn btn-ghost btn-sm" (click)="clearFilters()" *ngIf="filterType || filterCategory || filterFrom || filterTo">✕ {{ i18n.t('common.clear') }}</button>
   </div>
 
   <!-- Table -->
@@ -67,15 +67,15 @@
   <!-- Empty -->
   <div class="empty-state" *ngIf="!loading && transactions.length === 0">
     <div class="empty-state-icon">📋</div>
-    <p class="empty-state-text">Sem transações</p>
-    <p class="empty-state-hint">Clique em "+ Nova Transação" para começar</p>
+    <p class="empty-state-text">{{ i18n.t('tx.empty') }}</p>
+    <p class="empty-state-hint">{{ i18n.t('tx.empty_hint') }}</p>
   </div>
 
   <!-- Pagination -->
   <div class="pagination" *ngIf="totalPages > 1">
-    <button class="btn btn-secondary btn-sm" (click)="prevPage()" [disabled]="page <= 1">← Anterior</button>
+    <button class="btn btn-secondary btn-sm" (click)="prevPage()" [disabled]="page <= 1">← {{ i18n.t('common.prev') }}</button>
     <span class="caption">{{ page }} / {{ totalPages }}</span>
-    <button class="btn btn-secondary btn-sm" (click)="nextPage()" [disabled]="page >= totalPages">Próxima →</button>
+    <button class="btn btn-secondary btn-sm" (click)="nextPage()" [disabled]="page >= totalPages">{{ i18n.t('common.next') }} →</button>
   </div>
 
   <!-- Modal -->

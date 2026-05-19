@@ -40,10 +40,9 @@ export class TransactionsComponent implements OnInit {
     forkJoin({
       accounts: this.api.getAccounts(),
       categories: this.api.getCategories()
-    }).subscribe(data => {
-      this.accounts = data.accounts;
-      this.categories = data.categories;
-      this.loadData();
+    }).subscribe({
+      next: data => { this.accounts = data.accounts; this.categories = data.categories; this.loadData(); },
+      error: () => { this.loading = false; }
     });
   }
 

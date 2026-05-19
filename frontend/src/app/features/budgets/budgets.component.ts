@@ -51,7 +51,8 @@ import { Budget, Category } from '../../core/models';
 
       <div *ngIf="!loading && budgets.length === 0" class="empty-state">
         <div class="empty-state-icon">📊</div>
-        <p class="empty-state-text">Sem orçamentos</p>
+        <p class="empty-state-text">{{ i18n.t('budget.empty') }}</p>
+        <p class="empty-state-hint">{{ i18n.t('budget.empty_hint') }}</p>
       </div>
 
       <div class="modal-backdrop" *ngIf="showModal" (click)="showModal = false">

@@ -146,8 +146,7 @@ class AuthService
 
         $user = $this->userRepo->findByEmail($data['email']);
         if (!$user) {
-            // Don't reveal if email exists
-            return 'Se o email existir, receberá instruções de recuperação.';
+            Response::error('Email não encontrado na base de dados.', 404);
         }
 
         $token = bin2hex(random_bytes(32));

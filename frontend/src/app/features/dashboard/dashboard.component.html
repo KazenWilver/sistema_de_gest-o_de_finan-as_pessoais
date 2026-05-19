@@ -40,7 +40,7 @@
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">{{ i18n.t('dash.recent') }}</h2>
-        <a routerLink="/transactions" class="btn-text-link">Ver todos →</a>
+        <a routerLink="/transactions" class="btn-text-link">{{ i18n.t('common.all') }} →</a>
       </div>
       <div class="table-container" *ngIf="recentTransactions.length > 0">
         <table>
@@ -57,7 +57,7 @@
         </table>
       </div>
       <div class="empty-state" *ngIf="recentTransactions.length === 0 && !loading">
-        <p class="empty-state-text">Sem transações recentes</p>
+        <p class="empty-state-text">{{ i18n.t('tx.empty') }}</p>
       </div>
     </div>
 
@@ -65,7 +65,7 @@
     <div class="card">
       <div class="card-header">
         <h2 class="card-title">{{ i18n.t('dash.budgets') }}</h2>
-        <a routerLink="/budgets" class="btn-text-link">Ver todos →</a>
+        <a routerLink="/budgets" class="btn-text-link">{{ i18n.t('common.all') }} →</a>
       </div>
       <div class="budget-list" *ngIf="budgets.length > 0">
         <div class="budget-item" *ngFor="let b of budgets">
@@ -80,7 +80,7 @@
         </div>
       </div>
       <div class="empty-state" *ngIf="budgets.length === 0 && !loading">
-        <p class="empty-state-text">Sem orçamentos</p>
+        <p class="empty-state-text">{{ i18n.t('budget.empty') }}</p>
       </div>
     </div>
   </div>

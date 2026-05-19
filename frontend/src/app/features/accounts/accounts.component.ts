@@ -41,8 +41,8 @@ import { Account } from '../../core/models';
 
       <div *ngIf="!loading && accounts.length === 0" class="empty-state">
         <div class="empty-state-icon">🏦</div>
-        <p class="empty-state-text">Sem contas</p>
-        <p class="empty-state-hint">Crie a sua primeira conta financeira</p>
+        <p class="empty-state-text">{{ i18n.t('acc.empty') }}</p>
+        <p class="empty-state-hint">{{ i18n.t('acc.empty_hint') }}</p>
       </div>
 
       <div class="modal-backdrop" *ngIf="showModal" (click)="showModal = false">
