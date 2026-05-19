@@ -27,13 +27,24 @@ export class LoginComponent {
     this.loading = true;
     this.error = '';
 
+    console.log('[LOGIN] Enviando login...', this.email);
+
     this.authService.login({ email: this.email, password: this.password }).subscribe({
-      next: () => {
-        this.router.navigate(['/dashboard']);
+      next: (res) => {
+        console.log('[LOGIN] Sucesso! Resposta:', res);
+        console.log('[LOGIN] Token guardado:', !!localStorage.getItem('sgfp_token'));
+        this.router.navigate(['/dashboard']).then(
+          (success) => console.log('[LOGIN] Navegação para dashboard:', success),
+          (err) => console.error('[LOGIN] Erro na navegação:', err)
+        );
       },
       error: (err) => {
+        console.error('[LOGIN] Erro no login:', err);
         this.loading = false;
-        this.error = err.error?.message || 'Erro ao fazer login.';
+        this.error = err.error?.message || 'Erro ao fazer login. Verifique as credenciais.';
+      },
+      complete: () => {
+        console.log('[LOGIN] Observable completo');
       }
     });
   }
