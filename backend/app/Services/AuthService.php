@@ -44,7 +44,8 @@ class AuthService
             'password_hash' => password_hash($data['password'], PASSWORD_BCRYPT, ['cost' => 10]),
         ]);
 
-        // No default data — user creates everything from scratch        $user = $this->userRepo->findById($userId);
+        // No default data — user creates everything from scratch
+        $user = $this->userRepo->findById($userId);
         $token = JwtHelper::encode([
             'user_id' => $userId,
             'role'    => $user['role'],

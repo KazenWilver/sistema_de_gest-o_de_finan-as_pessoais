@@ -3,13 +3,13 @@
     <div class="auth-card">
       <div class="auth-header">
         <h1 class="auth-title">SGFP</h1>
-        <p class="auth-subtitle">Criar nova conta</p>
+        <p class="auth-subtitle">{{ i18n.t('auth.register') }}</p>
       </div>
 
       <form (ngSubmit)="onSubmit()" class="auth-form">
         <div class="form-group">
-          <label class="form-label">{{ i18n.t('auth.name') }}</label>
-          <input class="form-input" type="text" [(ngModel)]="name" name="name"
+          <label class="form-label" for="reg-name">{{ i18n.t('auth.name') }}</label>
+          <input class="form-input" type="text" id="reg-name" [(ngModel)]="name" name="name"
                  [class.error]="touched['name'] && !nameValid"
                  [class.success]="touched['name'] && nameValid"
                  (blur)="touched['name']=true" placeholder="Seu nome" autocomplete="name">
@@ -17,8 +17,8 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">{{ i18n.t('auth.email') }}</label>
-          <input class="form-input" type="email" [(ngModel)]="email" name="email"
+          <label class="form-label" for="reg-email">{{ i18n.t('auth.email') }}</label>
+          <input class="form-input" type="email" id="reg-email" [(ngModel)]="email" name="email"
                  [class.error]="touched['email'] && !emailValid"
                  [class.success]="touched['email'] && emailValid"
                  (blur)="touched['email']=true" placeholder="exemplo@email.com" autocomplete="email">
@@ -26,8 +26,8 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">{{ i18n.t('auth.password') }}</label>
-          <input class="form-input" type="password" [(ngModel)]="password" name="password"
+          <label class="form-label" for="reg-password">{{ i18n.t('auth.password') }}</label>
+          <input class="form-input" type="password" id="reg-password" [(ngModel)]="password" name="password"
                  [class.error]="touched['password'] && !passwordValid"
                  [class.success]="touched['password'] && passwordValid"
                  (blur)="touched['password']=true" placeholder="••••••" autocomplete="new-password">
