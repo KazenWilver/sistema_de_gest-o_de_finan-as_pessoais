@@ -31,7 +31,8 @@ import { ConfirmService } from '../../core/confirm.service';
                   <td>{{ u.email }}</td>
                   <td>
                     <select class="form-select" [ngModel]="u.role" (ngModelChange)="changeRole(u, $event)" style="width:auto;height:36px;font-size:12px;padding:6px 10px">
-                      <option value="user">User</option><option value="admin">Admin</option>
+                      <option value="user">{{ i18n.t('admin.role_user') }}</option>
+                      <option value="admin">{{ i18n.t('admin.role_admin') }}</option>
                     </select>
                   </td>
                   <td><span class="badge" [ngClass]="u.is_active ? 'badge-income' : 'badge-expense'">{{ u.is_active ? i18n.t('admin.active') : i18n.t('admin.inactive') }}</span></td>

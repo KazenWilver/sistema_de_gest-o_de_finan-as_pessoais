@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -21,7 +21,7 @@ export class RegisterComponent {
   touched: Record<string, boolean> = {};
   shakeError = false;
 
-  constructor(private auth: AuthService, private router: Router, public i18n: I18nService) {}
+  constructor(private auth: AuthService, private router: Router, public i18n: I18nService, private cdr: ChangeDetectorRef) {}
 
   get nameValid(): boolean { return this.name.trim().length >= 2; }
   get emailValid(): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email); }
@@ -37,10 +37,11 @@ export class RegisterComponent {
     this.loading = true;
     this.error = '';
     this.auth.register({ name: this.name, email: this.email, password: this.password }).subscribe({
-      next: () => { this.loading = false; this.router.navigate(['/dashboard']); },
+      next: () => { this.loading = false; this.cdr.detectChanges(); this.router.navigate(['/dashboard']); },
       error: (e) => {
         this.loading = false;
         this.error = e.error?.message || this.i18n.t('toast.error');
+        this.cdr.detectChanges();
         this.triggerShake();
       }
     });

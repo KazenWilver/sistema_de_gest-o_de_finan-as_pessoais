@@ -17,9 +17,9 @@
                  [class.error]="emailTouched && !emailValid"
                  [class.success]="emailTouched && emailValid"
                  (blur)="emailTouched = true"
-                 placeholder="exemplo@email.com"
+                 [placeholder]="i18n.t('auth.email_placeholder')"
                  autocomplete="email">
-          <span class="form-error" *ngIf="emailTouched && !emailValid">Email inválido</span>
+          <span class="form-error" *ngIf="emailTouched && !emailValid">{{ i18n.t('auth.invalid_email') }}</span>
         </div>
 
         <div class="form-group">
@@ -32,9 +32,9 @@
                  [class.error]="passwordTouched && !passwordValid"
                  [class.success]="passwordTouched && passwordValid"
                  (blur)="passwordTouched = true"
-                 placeholder="••••••"
+                 [placeholder]="i18n.t('auth.password_placeholder')"
                  autocomplete="current-password">
-          <span class="form-error" *ngIf="passwordTouched && !passwordValid">Mínimo 5 caracteres</span>
+          <span class="form-error" *ngIf="passwordTouched && !passwordValid">{{ i18n.t('auth.min_password') }}</span>
         </div>
 
         <div class="form-error auth-error" *ngIf="error">{{ error }}</div>

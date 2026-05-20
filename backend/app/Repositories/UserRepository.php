@@ -91,9 +91,9 @@ class UserRepository
     public function findResetToken(string $token): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT * FROM password_resets WHERE token = :token AND used = 0 AND expires_at > NOW()'
+            'SELECT * FROM password_resets WHERE token = :token AND used = 0 AND expires_at > :now'
         );
-        $stmt->execute(['token' => $token]);
+        $stmt->execute(['token' => $token, 'now' => date('Y-m-d H:i:s')]);
         $result = $stmt->fetch();
         return $result ?: null;
     }

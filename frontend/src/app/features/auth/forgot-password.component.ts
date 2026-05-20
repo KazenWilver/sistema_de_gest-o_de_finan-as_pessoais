@@ -22,7 +22,7 @@ import { I18nService } from '../../core/i18n.service';
           <form *ngIf="step === 'email'" (ngSubmit)="sendReset()" class="auth-form">
             <div class="form-group">
               <label class="form-label" for="forgot-email">{{ i18n.t('auth.email') }}</label>
-              <input class="form-input" id="forgot-email" type="email" [(ngModel)]="email" name="email" placeholder="exemplo@email.com" required>
+              <input class="form-input" id="forgot-email" type="email" [(ngModel)]="email" name="email" [placeholder]="i18n.t('auth.email_placeholder')" required>
             </div>
             <div class="form-error auth-error" *ngIf="error">{{ error }}</div>
             <div class="toast toast-success" style="margin-bottom:12px" *ngIf="tokenMessage">{{ tokenMessage }}</div>
@@ -35,12 +35,12 @@ import { I18nService } from '../../core/i18n.service';
           <!-- Step 2: Reset with token -->
           <form *ngIf="step === 'reset'" (ngSubmit)="resetPassword()" class="auth-form">
             <div class="form-group">
-              <label class="form-label" for="reset-token">Token</label>
-              <input class="form-input" id="reset-token" [(ngModel)]="token" name="token" placeholder="Token" required>
+              <label class="form-label" for="reset-token">{{ i18n.t('auth.token_prefix') }}</label>
+              <input class="form-input" id="reset-token" [(ngModel)]="token" name="token" [placeholder]="i18n.t('auth.token_placeholder')" required>
             </div>
             <div class="form-group">
               <label class="form-label" for="reset-pw">{{ i18n.t('settings.new_pw') }}</label>
-              <input class="form-input" id="reset-pw" type="password" [(ngModel)]="newPassword" name="newPassword" placeholder="••••••" required>
+              <input class="form-input" id="reset-pw" type="password" [(ngModel)]="newPassword" name="newPassword" [placeholder]="i18n.t('auth.password_placeholder')" required>
             </div>
             <div class="form-error auth-error" *ngIf="error">{{ error }}</div>
             <div class="toast toast-success" style="margin-bottom:12px" *ngIf="successMessage">{{ successMessage }}</div>
@@ -76,7 +76,7 @@ export class ForgotPasswordComponent {
         this.loading = false;
         // Backend returns { status: 'success', data: { reset_token: '...' } }
         const tkn = res?.data?.reset_token || res?.reset_token || '';
-        this.tokenMessage = 'Token: ' + tkn;
+        this.tokenMessage = this.i18n.t('auth.token_prefix') + ': ' + tkn;
         if (tkn) this.token = tkn; // Auto-fill token for convenience
         this.step = 'reset';
         this.cdr.detectChanges();

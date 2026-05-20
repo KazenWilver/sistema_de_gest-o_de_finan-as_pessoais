@@ -23,7 +23,7 @@
         }
       </select>
 
-      <button class="btn-icon theme-toggle" (click)="theme.toggleTheme()" [title]="theme.currentTheme === 'dark' ? 'Light mode' : 'Dark mode'">
+      <button class="btn-icon theme-toggle" (click)="theme.toggleTheme()" [title]="theme.currentTheme === 'dark' ? i18n.t('theme.light') : i18n.t('theme.dark')">
         {{ theme.currentTheme === 'dark' ? '☀️' : '🌙' }}
       </button>
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ConfirmService, ConfirmOptions } from '../../core/confirm.service';
 import { I18nService } from '../../core/i18n.service';
@@ -37,18 +37,19 @@ export class ConfirmDialogComponent implements OnInit, OnDestroy {
     return m[this.options.type || 'danger'] || '⚠️';
   }
 
-  constructor(private confirmService: ConfirmService, public i18n: I18nService) {}
+  constructor(private confirmService: ConfirmService, public i18n: I18nService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.sub = this.confirmService.confirm$.subscribe(({ options, resolve }) => {
       this.options = options;
       this.resolve = resolve;
       this.visible = true;
+      this.cdr.detectChanges();
     });
   }
 
   ngOnDestroy(): void { this.sub?.unsubscribe(); }
 
-  onConfirm(): void { this.visible = false; this.resolve(true); }
-  onCancel(): void { this.visible = false; this.resolve(false); }
+  onConfirm(): void { this.visible = false; this.resolve(true); this.cdr.detectChanges(); }
+  onCancel(): void { this.visible = false; this.resolve(false); this.cdr.detectChanges(); }
 }
