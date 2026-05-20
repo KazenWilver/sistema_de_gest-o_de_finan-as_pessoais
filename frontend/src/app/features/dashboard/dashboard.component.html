@@ -35,6 +35,26 @@
     <div class="card" *ngFor="let i of [1,2,3,4]"><div class="skeleton" style="height:80px"></div></div>
   </div>
 
+  <!-- Charts Row -->
+  <div class="dash-grid" *ngIf="!loading && chartData">
+    <div class="card chart-card">
+      <div class="card-header">
+        <h2 class="card-title">{{ i18n.t('chart.trend') }}</h2>
+      </div>
+      <div class="chart-container">
+        <canvas #trendChart></canvas>
+      </div>
+    </div>
+    <div class="card chart-card">
+      <div class="card-header">
+        <h2 class="card-title">{{ i18n.t('chart.by_category') }}</h2>
+      </div>
+      <div class="chart-container chart-container-sm">
+        <canvas #categoryChart></canvas>
+      </div>
+    </div>
+  </div>
+
   <div class="dash-grid">
     <!-- Recent Transactions -->
     <div class="card">

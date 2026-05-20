@@ -24,7 +24,33 @@
     </div>
   </div>
 
-  <!-- Category Breakdown -->
+  <!-- Charts Row -->
+  <div class="report-charts" *ngIf="!loading">
+    <!-- Pie Chart - Category Breakdown -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <h2 class="card-title">{{ i18n.t('chart.by_category') }}</h2>
+      </div>
+      <div class="chart-container">
+        <canvas #pieChart></canvas>
+      </div>
+      <div class="empty-state" *ngIf="categoryData.length === 0">
+        <p class="empty-state-text">{{ i18n.t('report.no_data_period') }}</p>
+      </div>
+    </div>
+
+    <!-- Bar Chart - Trend -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <h2 class="card-title">{{ i18n.t('chart.trend') }}</h2>
+      </div>
+      <div class="chart-container">
+        <canvas #trendLineChart></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category Breakdown Bars -->
   <div class="card" *ngIf="!loading">
     <div class="card-header">
       <h2 class="card-title">{{ i18n.t('report.by_category') }}</h2>
@@ -33,7 +59,7 @@
       @for (item of categoryData; track item.category_name) {
         <div class="cat-bar-row" *ngIf="item.type === 'expense'">
           <div class="cat-bar-label">
-            <span class="fw-700">{{ item.category_name || 'Sem categoria' }}</span>
+            <span class="fw-700">{{ item.category_name || i18n.t('report.no_category') }}</span>
             <span class="text-muted">{{ formatCurrency(item.total) }}</span>
           </div>
           <div class="cat-bar-track">
@@ -43,7 +69,7 @@
       }
     </div>
     <div class="empty-state" *ngIf="categoryData.length === 0">
-      <p class="empty-state-text">Sem dados para este período</p>
+      <p class="empty-state-text">{{ i18n.t('report.no_data_period') }}</p>
     </div>
   </div>
 

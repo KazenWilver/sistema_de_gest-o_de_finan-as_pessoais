@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -101,10 +101,10 @@ export class CategoriesComponent implements OnInit {
   presetColors = ['#1c69d4', '#22c55e', '#f59e0b', '#dc2626', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#64748b'];
   presetIcons = ['💰', '🏠', '🚗', '🍔', '🎓', '💊', '🎮', '✈️', '👕', '📱', '🛒', '📦', '💼', '🎁', '⚡', '💧'];
 
-  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService) {}
+  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService, private cdr: ChangeDetectorRef) {}
   ngOnInit(): void { this.load(); }
 
-  load(): void { this.loading = true; this.api.getCategories().subscribe({ next: d => { this.categories = d; this.loading = false; }, error: () => { this.loading = false; } }); }
+  load(): void { this.loading = true; this.api.getCategories().subscribe({ next: d => { this.categories = d; this.loading = false; this.cdr.detectChanges(); }, error: () => { this.loading = false; this.cdr.detectChanges(); } }); }
   get filtered(): Category[] { return this.categories.filter(c => c.type === this.activeTab); }
 
   openCreate(): void { this.editMode = false; this.form = { name: '', type: this.activeTab, icon: '📦', color: '#1c69d4' }; this.showModal = true; }

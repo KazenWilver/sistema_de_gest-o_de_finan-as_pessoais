@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -86,10 +86,10 @@ export class AccountsComponent implements OnInit {
   showModal = false; editMode = false; loading = true;
   form: any = { name: '', type: 'cash', currency: 'AOA' };
 
-  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService) {}
+  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService, private cdr: ChangeDetectorRef) {}
   ngOnInit(): void { this.load(); }
 
-  load(): void { this.loading = true; this.api.getAccounts().subscribe({ next: d => { this.accounts = d; this.loading = false; }, error: () => { this.loading = false; } }); }
+  load(): void { this.loading = true; this.api.getAccounts().subscribe({ next: d => { this.accounts = d; this.loading = false; this.cdr.detectChanges(); }, error: () => { this.loading = false; this.cdr.detectChanges(); } }); }
 
   openCreate(): void { this.editMode = false; this.form = { name: '', type: 'cash', currency: 'AOA' }; this.showModal = true; }
   openEdit(a: Account): void { this.editMode = true; this.form = { ...a }; this.showModal = true; }

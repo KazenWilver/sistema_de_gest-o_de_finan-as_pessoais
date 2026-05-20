@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -34,14 +34,14 @@ export class TransactionsComponent implements OnInit {
 
   form: any = { type: 'expense', amount: null, description: '', transaction_date: '', account_id: null, category_id: null, payment_method: '', notes: '' };
 
-  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService) {}
+  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     forkJoin({
       accounts: this.api.getAccounts(),
       categories: this.api.getCategories()
     }).subscribe({
-      next: data => { this.accounts = data.accounts; this.categories = data.categories; this.loadData(); },
+      next: data => { this.accounts = data.accounts; this.categories = data.categories; this.cdr.detectChanges(); this.loadData(); },
       error: () => { this.loading = false; }
     });
   }
@@ -55,8 +55,8 @@ export class TransactionsComponent implements OnInit {
     if (this.filterTo) filters.to = this.filterTo;
 
     this.api.getTransactions(filters).subscribe({
-      next: res => { this.transactions = res.transactions; this.total = res.total; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: res => { this.transactions = res.transactions; this.total = res.total; this.loading = false; this.cdr.detectChanges(); },
+      error: () => { this.loading = false; this.cdr.detectChanges(); }
     });
   }
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, ApplicationRef } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 const TRANSLATIONS: Record<string, Record<string, string>> = {
@@ -61,7 +61,14 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     'admin.title': 'Administração', 'admin.subtitle': 'Gestão de utilizadores',
     'admin.role': 'Papel', 'admin.status': 'Estado', 'admin.active': 'Activo', 'admin.inactive': 'Inactivo',
     'admin.delete_confirm': 'Eliminar este utilizador?',
+    'admin.role_updated': 'Papel actualizado', 'admin.status_updated': 'Estado actualizado',
+    'admin.users': 'Utilizadores', 'admin.delete_user': 'Eliminar utilizador',
     'nav.finances': 'Finanças Pessoais',
+    'report.no_category': 'Sem categoria', 'report.no_data_period': 'Sem dados para este período',
+    'report.csv_exported': 'CSV exportado!', 'report.pdf_exported': 'PDF exportado!',
+    'chart.income_expense': 'Receitas vs Despesas', 'chart.by_category': 'Despesas por Categoria',
+    'chart.trend': 'Tendência Mensal', 'chart.budget_usage': 'Uso de Orçamentos',
+    'dash.user_fallback': 'Utilizador',
   },
   en: {
     'nav.dashboard': 'Dashboard', 'nav.transactions': 'Transactions', 'nav.accounts': 'Accounts',
@@ -122,7 +129,14 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     'admin.title': 'Administration', 'admin.subtitle': 'User management',
     'admin.role': 'Role', 'admin.status': 'Status', 'admin.active': 'Active', 'admin.inactive': 'Inactive',
     'admin.delete_confirm': 'Delete this user?',
+    'admin.role_updated': 'Role updated', 'admin.status_updated': 'Status updated',
+    'admin.users': 'Users', 'admin.delete_user': 'Delete user',
     'nav.finances': 'Personal Finances',
+    'report.no_category': 'No category', 'report.no_data_period': 'No data for this period',
+    'report.csv_exported': 'CSV exported!', 'report.pdf_exported': 'PDF exported!',
+    'chart.income_expense': 'Income vs Expenses', 'chart.by_category': 'Expenses by Category',
+    'chart.trend': 'Monthly Trend', 'chart.budget_usage': 'Budget Usage',
+    'dash.user_fallback': 'User',
   },
   es: {
     'nav.dashboard': 'Panel', 'nav.transactions': 'Transacciones', 'nav.accounts': 'Cuentas',
@@ -165,6 +179,13 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     'dash.month_summary': 'Resumen del mes', 'dash.recent': 'Transacciones recientes',
     'nav.finances': 'Finanzas Personales',
     'toast.pw_changed': '¡Contraseña cambiada!', 'toast.pw_mismatch': 'Las contraseñas no coinciden.',
+    'admin.role_updated': 'Rol actualizado', 'admin.status_updated': 'Estado actualizado',
+    'admin.users': 'Usuarios', 'admin.delete_user': 'Eliminar usuario',
+    'report.no_category': 'Sin categoría', 'report.no_data_period': 'Sin datos para este período',
+    'report.csv_exported': '¡CSV exportado!', 'report.pdf_exported': '¡PDF exportado!',
+    'chart.income_expense': 'Ingresos vs Gastos', 'chart.by_category': 'Gastos por Categoría',
+    'chart.trend': 'Tendencia Mensual', 'chart.budget_usage': 'Uso de Presupuestos',
+    'dash.user_fallback': 'Usuario',
   },
   fr: {
     'nav.dashboard': 'Tableau de bord', 'nav.transactions': 'Transactions', 'nav.accounts': 'Comptes',
@@ -193,6 +214,10 @@ const TRANSLATIONS: Record<string, Record<string, string>> = {
     'acc.empty': 'Aucun compte', 'budget.empty': 'Aucun budget',
     'nav.finances': 'Finances Personnelles',
     'toast.pw_changed': 'Mot de passe changé !', 'toast.pw_mismatch': 'Les mots de passe ne correspondent pas.',
+    'admin.role_updated': 'Rôle mis à jour', 'admin.status_updated': 'Statut mis à jour',
+    'report.no_category': 'Sans catégorie', 'report.no_data_period': 'Pas de données pour cette période',
+    'chart.income_expense': 'Revenus vs Dépenses', 'chart.by_category': 'Dépenses par Catégorie',
+    'dash.user_fallback': 'Utilisateur',
   },
   ru: {
     'nav.dashboard': 'Панель', 'nav.transactions': 'Транзакции', 'nav.accounts': 'Счета',
@@ -270,7 +295,7 @@ export class I18nService {
     { code: 'it', label: 'Italiano' },
   ];
 
-  constructor() {
+  constructor(private appRef: ApplicationRef) {
     const stored = localStorage.getItem('sgfp_lang');
     if (stored) this.langSubject.next(stored);
   }
@@ -280,6 +305,8 @@ export class I18nService {
   setLanguage(lang: string): void {
     this.langSubject.next(lang);
     localStorage.setItem('sgfp_lang', lang);
+    // Force all components to re-evaluate i18n.t() bindings in zoneless mode
+    setTimeout(() => this.appRef.tick(), 0);
   }
 
   t(key: string): string {

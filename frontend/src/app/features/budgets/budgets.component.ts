@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -101,11 +101,11 @@ export class BudgetsComponent implements OnInit {
   Math = Math;
   form: any = { name: '', limit_amount: null, category_id: null, period: 'monthly', start_date: '', end_date: '' };
 
-  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService) {}
+  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void { this.load(); this.api.getCategories('expense').subscribe(d => this.categories = d); }
 
-  load(): void { this.loading = true; this.api.getBudgets().subscribe({ next: d => { this.budgets = d; this.loading = false; }, error: () => { this.loading = false; } }); }
+  load(): void { this.loading = true; this.api.getBudgets().subscribe({ next: d => { this.budgets = d; this.loading = false; this.cdr.detectChanges(); }, error: () => { this.loading = false; this.cdr.detectChanges(); } }); }
 
   openCreate(): void {
     const now = new Date(); this.editMode = false;

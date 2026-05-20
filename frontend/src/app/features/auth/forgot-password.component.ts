@@ -1,7 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { I18nService } from '../../core/i18n.service';
 
@@ -22,11 +22,11 @@ import { I18nService } from '../../core/i18n.service';
           <form *ngIf="step === 'email'" (ngSubmit)="sendReset()" class="auth-form">
             <div class="form-group">
               <label class="form-label" for="forgot-email">{{ i18n.t('auth.email') }}</label>
-              <input class="form-input" id="forgot-email" type="email" [(ngModel)]="email" name="email" placeholder="exemplo@email.com">
+              <input class="form-input" id="forgot-email" type="email" [(ngModel)]="email" name="email" placeholder="exemplo@email.com" required>
             </div>
             <div class="form-error auth-error" *ngIf="error">{{ error }}</div>
             <div class="toast toast-success" style="margin-bottom:12px" *ngIf="tokenMessage">{{ tokenMessage }}</div>
-            <button class="btn btn-primary btn-lg auth-submit" type="submit" [disabled]="loading">
+            <button class="btn btn-primary btn-lg auth-submit" type="submit" [disabled]="loading || !email">
               {{ loading ? i18n.t('common.loading') : i18n.t('common.confirm') }}
             </button>
             <div class="auth-links"><a routerLink="/auth/login" class="auth-link">← {{ i18n.t('auth.login') }}</a></div>
@@ -36,15 +36,15 @@ import { I18nService } from '../../core/i18n.service';
           <form *ngIf="step === 'reset'" (ngSubmit)="resetPassword()" class="auth-form">
             <div class="form-group">
               <label class="form-label" for="reset-token">Token</label>
-              <input class="form-input" id="reset-token" [(ngModel)]="token" name="token" placeholder="Token">
+              <input class="form-input" id="reset-token" [(ngModel)]="token" name="token" placeholder="Token" required>
             </div>
             <div class="form-group">
               <label class="form-label" for="reset-pw">{{ i18n.t('settings.new_pw') }}</label>
-              <input class="form-input" id="reset-pw" type="password" [(ngModel)]="newPassword" name="newPassword" placeholder="••••••">
+              <input class="form-input" id="reset-pw" type="password" [(ngModel)]="newPassword" name="newPassword" placeholder="••••••" required>
             </div>
             <div class="form-error auth-error" *ngIf="error">{{ error }}</div>
             <div class="toast toast-success" style="margin-bottom:12px" *ngIf="successMessage">{{ successMessage }}</div>
-            <button class="btn btn-primary btn-lg auth-submit" type="submit" [disabled]="loading">
+            <button class="btn btn-primary btn-lg auth-submit" type="submit" [disabled]="loading || !token || !newPassword">
               {{ loading ? i18n.t('common.loading') : i18n.t('common.confirm') }}
             </button>
             <div class="auth-links"><a routerLink="/auth/login" class="auth-link">← {{ i18n.t('auth.login') }}</a></div>
@@ -65,7 +65,7 @@ export class ForgotPasswordComponent {
   tokenMessage = '';
   successMessage = '';
 
-  constructor(private auth: AuthService, public i18n: I18nService) {}
+  constructor(private auth: AuthService, public i18n: I18nService, private cdr: ChangeDetectorRef, private router: Router) {}
 
   sendReset(): void {
     this.loading = true;
@@ -74,19 +74,38 @@ export class ForgotPasswordComponent {
     this.auth.forgotPassword(this.email).subscribe({
       next: (res: any) => {
         this.loading = false;
-        this.tokenMessage = 'Token: ' + (res?.data?.reset_token || res?.reset_token || '');
+        // Backend returns { status: 'success', data: { reset_token: '...' } }
+        const tkn = res?.data?.reset_token || res?.reset_token || '';
+        this.tokenMessage = 'Token: ' + tkn;
+        if (tkn) this.token = tkn; // Auto-fill token for convenience
         this.step = 'reset';
+        this.cdr.detectChanges();
       },
-      error: (e) => { this.loading = false; this.error = e.error?.message || this.i18n.t('toast.error'); }
+      error: (e) => {
+        this.loading = false;
+        this.error = e.error?.message || this.i18n.t('toast.error');
+        this.cdr.detectChanges();
+      }
     });
   }
 
   resetPassword(): void {
     this.loading = true;
     this.error = '';
+    this.successMessage = '';
     this.auth.resetPassword(this.token, this.newPassword).subscribe({
-      next: () => { this.loading = false; this.successMessage = this.i18n.t('toast.pw_changed'); },
-      error: (e) => { this.loading = false; this.error = e.error?.message || this.i18n.t('toast.error'); }
+      next: () => {
+        this.loading = false;
+        this.successMessage = this.i18n.t('toast.pw_changed');
+        this.cdr.detectChanges();
+        // Redirect to login after 2 seconds
+        setTimeout(() => this.router.navigate(['/auth/login']), 2000);
+      },
+      error: (e) => {
+        this.loading = false;
+        this.error = e.error?.message || this.i18n.t('toast.error');
+        this.cdr.detectChanges();
+      }
     });
   }
 }

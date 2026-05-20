@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -34,7 +34,7 @@ import { ConfirmService } from '../../core/confirm.service';
                       <option value="user">User</option><option value="admin">Admin</option>
                     </select>
                   </td>
-                  <td><span class="badge" [ngClass]="u.is_active ? 'badge-income' : 'badge-expense'">{{ u.is_active ? 'Activo' : 'Inactivo' }}</span></td>
+                  <td><span class="badge" [ngClass]="u.is_active ? 'badge-income' : 'badge-expense'">{{ u.is_active ? i18n.t('admin.active') : i18n.t('admin.inactive') }}</span></td>
                   <td>
                     <button class="btn btn-ghost btn-sm" (click)="toggleActive(u)">{{ u.is_active ? '🔒' : '🔓' }}</button>
                     <button class="btn btn-ghost btn-sm" (click)="deleteUser(u)">🗑️</button>
@@ -54,27 +54,27 @@ export class AdminComponent implements OnInit {
   users: any[] = [];
   loading = true;
 
-  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService) {}
+  constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService, private cdr: ChangeDetectorRef) {}
   ngOnInit(): void { this.load(); }
 
-  load(): void { this.loading = true; this.api.getUsers().subscribe({ next: d => { this.users = d; this.loading = false; }, error: () => { this.loading = false; } }); }
+  load(): void { this.loading = true; this.api.getUsers().subscribe({ next: d => { this.users = d; this.loading = false; this.cdr.detectChanges(); }, error: () => { this.loading = false; this.cdr.detectChanges(); } }); }
 
   changeRole(u: any, role: string): void {
     this.api.updateUserRole(u.id, role).subscribe({
-      next: () => { u.role = role; this.toast.success('Role actualizado'); },
+      next: () => { u.role = role; this.toast.success(this.i18n.t('admin.role_updated')); },
       error: () => this.toast.error(this.i18n.t('toast.error'))
     });
   }
 
   toggleActive(u: any): void {
     this.api.toggleUserActive(u.id).subscribe({
-      next: () => { u.is_active = !u.is_active; this.toast.success('Estado actualizado'); },
+      next: () => { u.is_active = !u.is_active; this.toast.success(this.i18n.t('admin.status_updated')); this.cdr.detectChanges(); },
       error: () => this.toast.error(this.i18n.t('toast.error'))
     });
   }
 
   async deleteUser(u: any): Promise<void> {
-    const ok = await this.confirm.confirm({ title: this.i18n.t('confirm.delete_title'), message: 'Eliminar utilizador ' + u.name + '?', type: 'danger', confirmText: this.i18n.t('common.delete') });
+    const ok = await this.confirm.confirm({ title: this.i18n.t('confirm.delete_title'), message: this.i18n.t('admin.delete_user') + ' ' + u.name + '?', type: 'danger', confirmText: this.i18n.t('common.delete') });
     if (ok) this.api.deleteUser(u.id).subscribe({ next: () => { this.load(); this.toast.success(this.i18n.t('toast.deleted')); }, error: () => this.toast.error(this.i18n.t('toast.error')) });
   }
 }
