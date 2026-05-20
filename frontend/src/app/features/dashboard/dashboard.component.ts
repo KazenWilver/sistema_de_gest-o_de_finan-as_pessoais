@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { forkJoin } from 'rxjs';
@@ -17,7 +17,7 @@ Chart.register(...registerables);
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
-export class DashboardComponent implements OnInit, AfterViewInit {
+export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   summary: DashboardSummary = { income: 0, expense: 0, balance: 0, savings_rate: 0 };
   recentTransactions: Transaction[] = [];
   budgets: Budget[] = [];
@@ -25,6 +25,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
   userName = '';
   currentMonth = '';
   loading = true;
+  private langSub: any;
 
   @ViewChild('trendChart') trendChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('categoryChart') categoryChartRef!: ElementRef<HTMLCanvasElement>;
@@ -54,9 +55,26 @@ export class DashboardComponent implements OnInit, AfterViewInit {
       },
       error: () => { this.loading = false; this.cdr.detectChanges(); }
     });
+
+    this.langSub = this.i18n.lang$.subscribe(() => {
+      this.userName = this.auth.currentUser?.name?.split(' ')[0] || this.i18n.t('dash.user_fallback');
+      const langCode = this.i18n.currentLang;
+      const locale = langCode === 'pt' ? 'pt-PT' : langCode === 'en' ? 'en-US' : langCode;
+      this.currentMonth = new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+      this.cdr.detectChanges();
+      if (!this.loading) {
+        this.renderCharts();
+      }
+    });
   }
 
   ngAfterViewInit(): void {}
+
+  ngOnDestroy(): void {
+    if (this.langSub) {
+      this.langSub.unsubscribe();
+    }
+  }
 
   private renderCharts(): void {
     setTimeout(() => {
@@ -131,7 +149,7 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     const catData = this.chartData.byCategory.filter((c: any) => c.type === 'expense' && parseFloat(c.total) > 0);
     if (catData.length === 0) return;
 
-    const labels = catData.map((c: any) => c.category_name || this.i18n.t('report.no_category'));
+    const labels = catData.map((c: any) => this.i18n.translateCategory(c.category_name) || this.i18n.t('report.no_category'));
     const values = catData.map((c: any) => parseFloat(c.total));
     const colors = [
       '#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6',

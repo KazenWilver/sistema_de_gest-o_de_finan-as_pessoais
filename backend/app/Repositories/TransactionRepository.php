@@ -140,7 +140,7 @@ class TransactionRepository
     public function getByCategory(int $userId, string $from, string $to): array
     {
         $stmt = $this->db->prepare(
-            'SELECT c.name, c.color, c.icon, t.type, SUM(t.amount) as total
+            'SELECT c.name, c.name as category_name, c.color, c.icon, t.type, SUM(t.amount) as total
              FROM transactions t JOIN categories c ON t.category_id = c.id
              WHERE t.user_id = :user_id AND t.transaction_date BETWEEN :from AND :to
              GROUP BY c.id, t.type ORDER BY total DESC'
@@ -151,13 +151,16 @@ class TransactionRepository
 
     public function getMonthlyTrend(int $userId, int $months = 6): array
     {
+        $dateThreshold = date('Y-m-d', strtotime("-$months months"));
         $stmt = $this->db->prepare(
-            "SELECT DATE_FORMAT(transaction_date, '%Y-%m') as month, type, SUM(amount) as total
+            "SELECT DATE_FORMAT(transaction_date, '%Y-%m') as month,
+                    SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
+                    SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expense
              FROM transactions WHERE user_id = :user_id
-             AND transaction_date >= DATE_SUB(CURDATE(), INTERVAL :months MONTH)
-             GROUP BY month, type ORDER BY month"
+             AND transaction_date >= :date_threshold
+             GROUP BY month ORDER BY month"
         );
-        $stmt->execute(['user_id' => $userId, 'months' => $months]);
+        $stmt->execute(['user_id' => $userId, 'date_threshold' => $dateThreshold]);
         return $stmt->fetchAll();
     }
 

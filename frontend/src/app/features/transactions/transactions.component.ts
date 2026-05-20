@@ -33,6 +33,7 @@ export class TransactionsComponent implements OnInit {
   filterTo = '';
 
   form: any = { type: 'expense', amount: null, description: '', transaction_date: '', account_id: null, category_id: null, payment_method: '', notes: '' };
+  errors: Record<string, boolean> = {};
 
   constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService, private cdr: ChangeDetectorRef) {}
 
@@ -65,22 +66,62 @@ export class TransactionsComponent implements OnInit {
 
   openCreate(): void {
     this.editMode = false;
-    this.form = { type: 'expense', amount: null, description: '', transaction_date: new Date().toISOString().split('T')[0], account_id: this.accounts[0]?.id, category_id: null, payment_method: '', notes: '' };
+    this.errors = {};
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    this.form = { type: 'expense', amount: null, description: '', transaction_date: today, account_id: this.accounts[0]?.id, category_id: null, payment_method: '', notes: '' };
     this.showModal = true;
   }
 
   openEdit(tx: Transaction): void {
     this.editMode = true;
+    this.errors = {};
     this.form = { ...tx, id: tx.id };
     this.showModal = true;
   }
 
+  validateForm(): boolean {
+    this.errors = {};
+    let isValid = true;
+    if (!this.form.description || !this.form.description.trim()) {
+      this.errors['description'] = true;
+      isValid = false;
+    }
+    if (this.form.amount === null || this.form.amount === undefined || this.form.amount <= 0) {
+      this.errors['amount'] = true;
+      isValid = false;
+    }
+    if (!this.form.transaction_date) {
+      this.errors['transaction_date'] = true;
+      isValid = false;
+    }
+    if (!this.form.account_id) {
+      this.errors['account_id'] = true;
+      isValid = false;
+    }
+    if (!this.form.category_id) {
+      this.errors['category_id'] = true;
+      isValid = false;
+    }
+    return isValid;
+  }
+
   save(): void {
+    if (!this.validateForm()) {
+      this.toast.error(this.i18n.t('validation.fix_errors'));
+      return;
+    }
     this.saving = true;
     const obs = this.editMode ? this.api.updateTransaction(this.form.id, this.form) : this.api.createTransaction(this.form);
     obs.subscribe({
       next: () => { this.saving = false; this.showModal = false; this.loadData(); this.toast.success(this.i18n.t('toast.saved')); },
-      error: () => { this.saving = false; this.toast.error(this.i18n.t('toast.error')); }
+      error: (err) => {
+        this.saving = false;
+        if (err.error?.errors) {
+          this.errors = err.error.errors;
+        }
+        this.toast.error(err.error?.message || this.i18n.t('toast.error'));
+      }
     });
   }
 

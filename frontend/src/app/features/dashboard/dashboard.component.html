@@ -68,7 +68,7 @@
           <tbody>
             <tr *ngFor="let tx of recentTransactions; let i = index" [style.animation-delay]="i * 50 + 'ms'" class="row-animate">
               <td><span class="fw-700">{{ tx.description }}</span><br><span class="caption">{{ tx.transaction_date }}</span></td>
-              <td><span class="badge" [ngClass]="tx.type === 'income' ? 'badge-income' : 'badge-expense'">{{ tx.category_name || '-' }}</span></td>
+              <td><span class="badge" [ngClass]="tx.type === 'income' ? 'badge-income' : 'badge-expense'">{{ i18n.translateCategory(tx.category_name) || '-' }}</span></td>
               <td class="text-right fw-700" [class.text-success]="tx.type==='income'" [class.text-error]="tx.type==='expense'">
                 {{ tx.type === 'income' ? '+' : '-' }}{{ formatCurrency(tx.amount) }}
               </td>

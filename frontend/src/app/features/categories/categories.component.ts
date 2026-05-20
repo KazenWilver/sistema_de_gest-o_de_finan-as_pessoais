@@ -27,7 +27,7 @@ import { Category } from '../../core/models';
         @for (cat of filtered; track cat.id; let i = $index) {
           <div class="card card-hover cat-card" [style.animation-delay]="i * 40 + 'ms'">
             <div class="cat-icon" [style.background]="cat.color + '18'" [style.color]="cat.color">{{ cat.icon }}</div>
-            <h3 class="cat-name">{{ cat.name }}</h3>
+            <h3 class="cat-name">{{ i18n.translateCategory(cat.name) }}</h3>
             <span class="badge" [ngClass]="cat.type === 'income' ? 'badge-income' : 'badge-expense'">
               {{ cat.type === 'income' ? i18n.t('tx.income') : i18n.t('tx.expense') }}
             </span>
@@ -50,7 +50,11 @@ import { Category } from '../../core/models';
             <h3 class="modal-title">{{ editMode ? i18n.t('common.edit') : i18n.t('cat.new') }}</h3>
             <button class="modal-close" (click)="showModal = false">✕</button>
           </div>
-          <div class="form-group"><label class="form-label" for="cat-name">{{ i18n.t('acc.name') }}</label><input class="form-input" id="cat-name" name="name" [(ngModel)]="form.name"></div>
+          <div class="form-group">
+            <label class="form-label" for="cat-name">{{ i18n.t('acc.name') }}</label>
+            <input class="form-input" [class.is-invalid]="errors['name']" id="cat-name" name="name" [(ngModel)]="form.name">
+            <span class="form-error" *ngIf="errors['name']">{{ i18n.t('validation.required') }}</span>
+          </div>
           <div class="form-group"><label class="form-label">{{ i18n.t('tx.type') }}</label>
             <select class="form-select" id="cat-type" name="type" [(ngModel)]="form.type"><option value="income">{{ i18n.t('tx.income') }}</option><option value="expense">{{ i18n.t('tx.expense') }}</option></select>
           </div>
@@ -97,6 +101,7 @@ export class CategoriesComponent implements OnInit {
   activeTab: 'income' | 'expense' = 'expense';
   showModal = false; editMode = false; loading = true;
   form: any = { name: '', type: 'expense', icon: '📦', color: '#1c69d4' };
+  errors: Record<string, boolean> = {};
 
   presetColors = ['#1c69d4', '#22c55e', '#f59e0b', '#dc2626', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#64748b'];
   presetIcons = ['💰', '🏠', '🚗', '🍔', '🎓', '💊', '🎮', '✈️', '👕', '📱', '🛒', '📦', '💼', '🎁', '⚡', '💧'];
@@ -107,12 +112,34 @@ export class CategoriesComponent implements OnInit {
   load(): void { this.loading = true; this.api.getCategories().subscribe({ next: d => { this.categories = d; this.loading = false; this.cdr.detectChanges(); }, error: () => { this.loading = false; this.cdr.detectChanges(); } }); }
   get filtered(): Category[] { return this.categories.filter(c => c.type === this.activeTab); }
 
-  openCreate(): void { this.editMode = false; this.form = { name: '', type: this.activeTab, icon: '📦', color: '#1c69d4' }; this.showModal = true; }
-  openEdit(c: Category): void { this.editMode = true; this.form = { ...c }; this.showModal = true; }
+  openCreate(): void { this.editMode = false; this.errors = {}; this.form = { name: '', type: this.activeTab, icon: '📦', color: '#1c69d4' }; this.showModal = true; }
+  openEdit(c: Category): void { this.editMode = true; this.errors = {}; this.form = { ...c }; this.showModal = true; }
+
+  validateForm(): boolean {
+    this.errors = {};
+    let isValid = true;
+    if (!this.form.name || !this.form.name.trim()) {
+      this.errors['name'] = true;
+      isValid = false;
+    }
+    return isValid;
+  }
 
   save(): void {
+    if (!this.validateForm()) {
+      this.toast.error(this.i18n.t('validation.fix_errors'));
+      return;
+    }
     const obs = this.editMode ? this.api.updateCategory(this.form.id, this.form) : this.api.createCategory(this.form);
-    obs.subscribe({ next: () => { this.showModal = false; this.load(); this.toast.success(this.i18n.t('toast.saved')); }, error: () => this.toast.error(this.i18n.t('toast.error')) });
+    obs.subscribe({
+      next: () => { this.showModal = false; this.load(); this.toast.success(this.i18n.t('toast.saved')); },
+      error: (err) => {
+        if (err.error?.errors) {
+          this.errors = err.error.errors;
+        }
+        this.toast.error(err.error?.message || this.i18n.t('toast.error'));
+      }
+    });
   }
 
   async delete(c: Category): Promise<void> {

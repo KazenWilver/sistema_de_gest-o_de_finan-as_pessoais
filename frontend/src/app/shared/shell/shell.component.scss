@@ -148,12 +148,24 @@
   span.open::after { transform: rotate(-45deg); top: 0; }
 }
 
+.show-mobile-only {
+  display: none !important;
+}
+
 .main-content {
   min-height: calc(100vh - var(--nav-height));
 }
 
 /* ── Mobile ── */
 @media (max-width: 900px) {
+  .show-mobile-only {
+    display: block !important;
+  }
+  
+  .hide-mobile {
+    display: none !important;
+  }
+
   .nav-links {
     display: none;
     position: fixed;
@@ -177,10 +189,21 @@
     &.active::after { display: none; }
   }
 
+  .mobile-logout {
+    color: var(--color-error) !important;
+    font-size: 18px !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.8px !important;
+  }
+
   .hamburger { display: block; }
 
   .logo-sub { display: none; }
   .logo-divider { display: none; }
-
-  .lang-picker { display: none; }
+  
+  .lang-picker {
+    padding: 4px 20px 4px 6px;
+    font-size: 11px;
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
@@ -15,13 +15,17 @@ Chart.register(...registerables);
   templateUrl: './reports.component.html',
   styleUrl: './reports.component.scss'
 })
-export class ReportsComponent implements OnInit {
-  month = new Date().toISOString().slice(0, 7);
+export class ReportsComponent implements OnInit, OnDestroy {
+  month = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  })();
   summary: any = {};
   categoryData: any[] = [];
   trendData: any[] = [];
   maxCatValue = 1;
   loading = true;
+  private langSub: any;
 
   @ViewChild('pieChart') pieChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('trendLineChart') trendLineChartRef!: ElementRef<HTMLCanvasElement>;
@@ -29,7 +33,23 @@ export class ReportsComponent implements OnInit {
   private trendChartInstance: Chart | null = null;
 
   constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private cdr: ChangeDetectorRef) {}
-  ngOnInit(): void { this.load(); }
+  
+  ngOnInit(): void {
+    this.load();
+    this.langSub = this.i18n.lang$.subscribe(() => {
+      this.cdr.detectChanges();
+      if (!this.loading) {
+        this.renderPieChart();
+        this.renderTrendChart();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.langSub) {
+      this.langSub.unsubscribe();
+    }
+  }
 
   load(): void {
     this.loading = true;
@@ -38,7 +58,8 @@ export class ReportsComponent implements OnInit {
     const from = this.month + '-01';
     const y = parseInt(this.month.split('-')[0]);
     const m = parseInt(this.month.split('-')[1]);
-    const to = new Date(y, m, 0).toISOString().split('T')[0];
+    const lastDay = new Date(y, m, 0).getDate();
+    const to = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
     this.api.getReportByCategory(from, to).subscribe({
       next: d => {
@@ -70,7 +91,7 @@ export class ReportsComponent implements OnInit {
       const expenseData = this.categoryData.filter((c: any) => c.type === 'expense' && parseFloat(c.total) > 0);
       if (expenseData.length === 0) return;
 
-      const labels = expenseData.map((c: any) => c.category_name || this.i18n.t('report.no_category'));
+      const labels = expenseData.map((c: any) => this.i18n.translateCategory(c.category_name) || this.i18n.t('report.no_category'));
       const values = expenseData.map((c: any) => parseFloat(c.total));
       const colors = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#64748b'];
 

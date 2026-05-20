@@ -58,6 +58,19 @@ class TransactionController
         $id = (int) $request->param('id');
         $userId = $request->param('userId');
         if (!$this->repo->findById($id, $userId)) Response::error('Transação não encontrada.', 404);
+
+        $v = new Validator();
+        if (!$v->validate($request->body(), [
+            'account_id'       => 'required|numeric',
+            'category_id'      => 'required|numeric',
+            'type'             => 'required|in:income,expense',
+            'amount'           => 'required|numeric|min:0.01',
+            'description'      => 'required|min:2',
+            'transaction_date' => 'required|date',
+        ])) {
+            Response::error('Dados inválidos.', 422, $v->errors());
+        }
+
         $this->repo->update($id, $userId, $request->body());
         Response::json($this->repo->findById($id, $userId), 200, 'Transação atualizada.');
     }

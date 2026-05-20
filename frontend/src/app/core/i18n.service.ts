@@ -1,331 +1,90 @@
 import { Injectable, ApplicationRef } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject } from 'rxjs';
 
-const TRANSLATIONS: Record<string, Record<string, string>> = {
-  pt: {
-    'nav.dashboard': 'Painel', 'nav.transactions': 'Transações', 'nav.accounts': 'Contas',
-    'nav.categories': 'Categorias', 'nav.budgets': 'Orçamentos', 'nav.reports': 'Relatórios',
-    'nav.settings': 'Definições', 'nav.admin': 'Admin', 'nav.logout': 'Sair',
-    'common.save': 'Guardar', 'common.cancel': 'Cancelar', 'common.create': 'Criar',
-    'common.edit': 'Editar', 'common.delete': 'Eliminar', 'common.confirm': 'Confirmar',
-    'common.yes': 'Sim', 'common.no': 'Não', 'common.loading': 'A carregar...',
-    'common.search': 'Pesquisar', 'common.filter': 'Filtrar', 'common.export': 'Exportar',
-    'common.new': 'Novo', 'common.all': 'Todos', 'common.none': 'Nenhum',
-    'auth.login': 'Entrar', 'auth.register': 'Registar', 'auth.email': 'Email',
-    'auth.password': 'Palavra-passe', 'auth.name': 'Nome', 'auth.forgot': 'Esqueceu a senha?',
-    'auth.no_account': 'Não tem conta?', 'auth.has_account': 'Já tem conta?',
-    'auth.welcome': 'Bem-vindo de volta', 'auth.subtitle': 'Gerir as suas finanças pessoais',
-    'dash.greeting': 'Olá', 'dash.month_summary': 'Resumo do mês',
-    'dash.income': 'Receitas', 'dash.expense': 'Despesas', 'dash.balance': 'Saldo',
-    'dash.savings': 'Poupança', 'dash.recent': 'Transações recentes', 'dash.budgets': 'Orçamentos',
-    'tx.title': 'Transações', 'tx.subtitle': 'Histórico financeiro',
-    'tx.new': 'Nova Transação', 'tx.type': 'Tipo', 'tx.amount': 'Valor',
-    'tx.description': 'Descrição', 'tx.date': 'Data', 'tx.account': 'Conta',
-    'tx.category': 'Categoria', 'tx.method': 'Método', 'tx.notes': 'Notas',
-    'tx.income': 'Receita', 'tx.expense': 'Despesa', 'tx.delete_confirm': 'Eliminar esta transação?',
-    'acc.title': 'Contas', 'acc.subtitle': 'Gerir contas financeiras', 'acc.new': 'Nova Conta',
-    'acc.name': 'Nome', 'acc.type': 'Tipo', 'acc.currency': 'Moeda',
-    'acc.cash': 'Dinheiro', 'acc.bank': 'Banco', 'acc.mobile': 'Mobile Money',
-    'acc.savings': 'Poupança', 'acc.other': 'Outro', 'acc.delete_confirm': 'Eliminar esta conta?',
-    'cat.title': 'Categorias', 'cat.subtitle': 'Organizar receitas e despesas',
-    'cat.new': 'Nova Categoria', 'cat.incomes': 'Receitas', 'cat.expenses': 'Despesas',
-    'cat.color': 'Cor', 'cat.icon': 'Ícone', 'cat.default': 'Padrão',
-    'cat.delete_confirm': 'Eliminar esta categoria?',
-    'budget.title': 'Orçamentos', 'budget.subtitle': 'Controlar limites de gastos',
-    'budget.new': 'Novo Orçamento', 'budget.limit': 'Limite', 'budget.period': 'Período',
-    'budget.weekly': 'Semanal', 'budget.monthly': 'Mensal', 'budget.yearly': 'Anual',
-    'budget.start': 'Início', 'budget.end': 'Fim', 'budget.used': 'utilizado',
-    'budget.general': 'Geral (todas)', 'budget.delete_confirm': 'Eliminar este orçamento?',
-    'report.title': 'Relatórios', 'report.subtitle': 'Análise financeira detalhada',
-    'report.by_category': 'Por categoria', 'report.summary': 'Resumo',
-    'report.csv': 'Exportar CSV', 'report.pdf': 'Exportar PDF',
-    'settings.title': 'Definições', 'settings.subtitle': 'Personalizar a sua conta',
-    'settings.profile': 'Perfil', 'settings.security': 'Segurança',
-    'settings.language': 'Idioma', 'settings.theme': 'Tema',
-    'settings.current_pw': 'Palavra-passe actual', 'settings.new_pw': 'Nova palavra-passe',
-    'settings.confirm_pw': 'Confirmar palavra-passe', 'settings.change_pw': 'Alterar Palavra-passe',
-    'settings.save_profile': 'Guardar Perfil',
-    'toast.saved': 'Guardado com sucesso!', 'toast.deleted': 'Eliminado com sucesso!',
-    'toast.error': 'Ocorreu um erro.', 'toast.pw_changed': 'Palavra-passe alterada!',
-    'toast.pw_mismatch': 'As palavras-passe não coincidem.',
-    'confirm.delete_title': 'Confirmar Eliminação',
-    'confirm.delete_msg': 'Tem a certeza que deseja eliminar? Esta acção não pode ser revertida.',
-    'confirm.logout_title': 'Terminar Sessão', 'confirm.logout_msg': 'Deseja sair da sua conta?',
-    'common.clear': 'Limpar', 'common.prev': 'Anterior', 'common.next': 'Próxima',
-    'tx.empty': 'Sem transações', 'tx.empty_hint': 'Clique em "+ Nova Transação" para começar',
-    'budget.empty': 'Sem orçamentos', 'budget.empty_hint': 'Crie um orçamento para controlar os seus gastos',
-    'acc.empty': 'Sem contas', 'acc.empty_hint': 'Crie uma conta para começar',
-    'cat.empty': 'Sem categorias', 'cat.empty_hint': 'Crie uma categoria para organizar',
-    'report.empty': 'Sem dados para o período selecionado',
-    'dash.no_data': 'Sem dados disponíveis',
-    'admin.title': 'Administração', 'admin.subtitle': 'Gestão de utilizadores',
-    'admin.role': 'Papel', 'admin.status': 'Estado', 'admin.active': 'Activo', 'admin.inactive': 'Inactivo',
-    'admin.delete_confirm': 'Eliminar este utilizador?',
-    'admin.role_updated': 'Papel actualizado', 'admin.status_updated': 'Estado actualizado',
-    'admin.users': 'Utilizadores', 'admin.delete_user': 'Eliminar utilizador',
-    'nav.finances': 'Finanças Pessoais',
-    'report.no_category': 'Sem categoria', 'report.no_data_period': 'Sem dados para este período',
-    'report.csv_exported': 'CSV exportado!', 'report.pdf_exported': 'PDF exportado!',
-    'chart.income_expense': 'Receitas vs Despesas', 'chart.by_category': 'Despesas por Categoria',
-    'chart.trend': 'Tendência Mensal', 'chart.budget_usage': 'Uso de Orçamentos',
-    'dash.user_fallback': 'Utilizador',
-    'auth.invalid_email': 'E-mail inválido', 'auth.min_password': 'Mínimo 5 caracteres', 'auth.min_name': 'Mínimo 2 caracteres',
-    'auth.email_placeholder': 'exemplo@email.com', 'auth.password_placeholder': '••••••', 'auth.name_placeholder': 'Seu nome',
-    'auth.token_placeholder': 'Token', 'auth.token_prefix': 'Token',
-    'theme.light': 'Modo claro', 'theme.dark': 'Modo escuro', 'theme.light_label': 'Claro', 'theme.dark_label': 'Escuro',
-    'currency.aoa': 'AOA - Kwanza', 'currency.usd': 'USD - Dólar', 'currency.eur': 'EUR - Euro',
-    'admin.role_user': 'Utilizador', 'admin.role_admin': 'Administrador',
-  },
-  en: {
-    'nav.dashboard': 'Dashboard', 'nav.transactions': 'Transactions', 'nav.accounts': 'Accounts',
-    'nav.categories': 'Categories', 'nav.budgets': 'Budgets', 'nav.reports': 'Reports',
-    'nav.settings': 'Settings', 'nav.admin': 'Admin', 'nav.logout': 'Logout',
-    'common.save': 'Save', 'common.cancel': 'Cancel', 'common.create': 'Create',
-    'common.edit': 'Edit', 'common.delete': 'Delete', 'common.confirm': 'Confirm',
-    'common.yes': 'Yes', 'common.no': 'No', 'common.loading': 'Loading...',
-    'common.search': 'Search', 'common.filter': 'Filter', 'common.export': 'Export',
-    'common.new': 'New', 'common.all': 'All', 'common.none': 'None',
-    'auth.login': 'Sign In', 'auth.register': 'Sign Up', 'auth.email': 'Email',
-    'auth.password': 'Password', 'auth.name': 'Name', 'auth.forgot': 'Forgot password?',
-    'auth.no_account': "Don't have an account?", 'auth.has_account': 'Already have an account?',
-    'auth.welcome': 'Welcome back', 'auth.subtitle': 'Manage your personal finances',
-    'dash.greeting': 'Hello', 'dash.month_summary': 'Month summary',
-    'dash.income': 'Income', 'dash.expense': 'Expenses', 'dash.balance': 'Balance',
-    'dash.savings': 'Savings', 'dash.recent': 'Recent transactions', 'dash.budgets': 'Budgets',
-    'tx.title': 'Transactions', 'tx.subtitle': 'Financial history',
-    'tx.new': 'New Transaction', 'tx.type': 'Type', 'tx.amount': 'Amount',
-    'tx.description': 'Description', 'tx.date': 'Date', 'tx.account': 'Account',
-    'tx.category': 'Category', 'tx.method': 'Method', 'tx.notes': 'Notes',
-    'tx.income': 'Income', 'tx.expense': 'Expense', 'tx.delete_confirm': 'Delete this transaction?',
-    'acc.title': 'Accounts', 'acc.subtitle': 'Manage financial accounts', 'acc.new': 'New Account',
-    'acc.name': 'Name', 'acc.type': 'Type', 'acc.currency': 'Currency',
-    'acc.cash': 'Cash', 'acc.bank': 'Bank', 'acc.mobile': 'Mobile Money',
-    'acc.savings': 'Savings', 'acc.other': 'Other', 'acc.delete_confirm': 'Delete this account?',
-    'cat.title': 'Categories', 'cat.subtitle': 'Organize income and expenses',
-    'cat.new': 'New Category', 'cat.incomes': 'Income', 'cat.expenses': 'Expenses',
-    'cat.color': 'Color', 'cat.icon': 'Icon', 'cat.default': 'Default',
-    'cat.delete_confirm': 'Delete this category?',
-    'budget.title': 'Budgets', 'budget.subtitle': 'Control spending limits',
-    'budget.new': 'New Budget', 'budget.limit': 'Limit', 'budget.period': 'Period',
-    'budget.weekly': 'Weekly', 'budget.monthly': 'Monthly', 'budget.yearly': 'Yearly',
-    'budget.start': 'Start', 'budget.end': 'End', 'budget.used': 'used',
-    'budget.general': 'General (all)', 'budget.delete_confirm': 'Delete this budget?',
-    'report.title': 'Reports', 'report.subtitle': 'Detailed financial analysis',
-    'report.by_category': 'By category', 'report.summary': 'Summary',
-    'report.csv': 'Export CSV', 'report.pdf': 'Export PDF',
-    'settings.title': 'Settings', 'settings.subtitle': 'Customize your account',
-    'settings.profile': 'Profile', 'settings.security': 'Security',
-    'settings.language': 'Language', 'settings.theme': 'Theme',
-    'settings.current_pw': 'Current password', 'settings.new_pw': 'New password',
-    'settings.confirm_pw': 'Confirm password', 'settings.change_pw': 'Change Password',
-    'settings.save_profile': 'Save Profile',
-    'toast.saved': 'Saved successfully!', 'toast.deleted': 'Deleted successfully!',
-    'toast.error': 'An error occurred.', 'toast.pw_changed': 'Password changed!',
-    'toast.pw_mismatch': 'Passwords do not match.',
-    'confirm.delete_title': 'Confirm Deletion',
-    'confirm.delete_msg': 'Are you sure you want to delete? This action cannot be undone.',
-    'confirm.logout_title': 'Sign Out', 'confirm.logout_msg': 'Do you want to sign out?',
-    'common.clear': 'Clear', 'common.prev': 'Previous', 'common.next': 'Next',
-    'tx.empty': 'No transactions', 'tx.empty_hint': 'Click "+ New Transaction" to start',
-    'budget.empty': 'No budgets', 'budget.empty_hint': 'Create a budget to track spending',
-    'acc.empty': 'No accounts', 'acc.empty_hint': 'Create an account to start',
-    'cat.empty': 'No categories', 'cat.empty_hint': 'Create a category to organize',
-    'report.empty': 'No data for selected period',
-    'dash.no_data': 'No data available',
-    'admin.title': 'Administration', 'admin.subtitle': 'User management',
-    'admin.role': 'Role', 'admin.status': 'Status', 'admin.active': 'Active', 'admin.inactive': 'Inactive',
-    'admin.delete_confirm': 'Delete this user?',
-    'admin.role_updated': 'Role updated', 'admin.status_updated': 'Status updated',
-    'admin.users': 'Users', 'admin.delete_user': 'Delete user',
-    'nav.finances': 'Personal Finances',
-    'report.no_category': 'No category', 'report.no_data_period': 'No data for this period',
-    'report.csv_exported': 'CSV exported!', 'report.pdf_exported': 'PDF exported!',
-    'chart.income_expense': 'Income vs Expenses', 'chart.by_category': 'Expenses by Category',
-    'chart.trend': 'Monthly Trend', 'chart.budget_usage': 'Budget Usage',
-    'dash.user_fallback': 'User',
-    'auth.invalid_email': 'Invalid email', 'auth.min_password': 'Minimum 5 characters', 'auth.min_name': 'Minimum 2 characters',
-    'auth.email_placeholder': 'example@email.com', 'auth.password_placeholder': '••••••', 'auth.name_placeholder': 'Your name',
-    'auth.token_placeholder': 'Token', 'auth.token_prefix': 'Token',
-    'theme.light': 'Light mode', 'theme.dark': 'Dark mode', 'theme.light_label': 'Light', 'theme.dark_label': 'Dark',
-    'currency.aoa': 'AOA - Kwanza', 'currency.usd': 'USD - Dollar', 'currency.eur': 'EUR - Euro',
-    'admin.role_user': 'User', 'admin.role_admin': 'Administrator',
-  },
-  es: {
-    'nav.dashboard': 'Panel', 'nav.transactions': 'Transacciones', 'nav.accounts': 'Cuentas',
-    'nav.categories': 'Categorías', 'nav.budgets': 'Presupuestos', 'nav.reports': 'Informes',
-    'nav.settings': 'Ajustes', 'nav.admin': 'Admin', 'nav.logout': 'Salir',
-    'common.save': 'Guardar', 'common.cancel': 'Cancelar', 'common.create': 'Crear',
-    'common.edit': 'Editar', 'common.delete': 'Eliminar', 'common.confirm': 'Confirmar',
-    'common.yes': 'Sí', 'common.no': 'No', 'common.loading': 'Cargando...',
-    'auth.login': 'Iniciar sesión', 'auth.register': 'Registrarse',
-    'auth.welcome': 'Bienvenido', 'auth.subtitle': 'Gestiona tus finanzas personales',
-    'dash.greeting': 'Hola', 'dash.income': 'Ingresos', 'dash.expense': 'Gastos',
-    'dash.balance': 'Saldo', 'dash.savings': 'Ahorro',
-    'toast.saved': '¡Guardado!', 'toast.deleted': '¡Eliminado!', 'toast.error': 'Ocurrió un error.',
-    'confirm.delete_title': 'Confirmar eliminación',
-    'confirm.delete_msg': '¿Está seguro de que desea eliminar? Esta acción no se puede deshacer.',
-    'auth.email': 'Correo', 'auth.password': 'Contraseña', 'auth.name': 'Nombre',
-    'auth.forgot': '¿Olvidó su contraseña?', 'auth.no_account': '¿No tiene cuenta?', 'auth.has_account': '¿Ya tiene cuenta?',
-    'common.all': 'Todos',
-    'common.clear': 'Limpiar', 'common.prev': 'Anterior', 'common.next': 'Siguiente',
-    'common.search': 'Buscar', 'common.filter': 'Filtrar', 'common.new': 'Nuevo', 'common.none': 'Ninguno',
-    'settings.title': 'Ajustes', 'settings.subtitle': 'Personalizar su cuenta',
-    'settings.profile': 'Perfil', 'settings.security': 'Seguridad',
-    'settings.language': 'Idioma', 'settings.theme': 'Tema',
-    'settings.current_pw': 'Contraseña actual', 'settings.new_pw': 'Nueva contraseña',
-    'settings.confirm_pw': 'Confirmar contraseña', 'settings.change_pw': 'Cambiar Contraseña',
-    'settings.save_profile': 'Guardar Perfil',
-    'tx.title': 'Transacciones', 'tx.subtitle': 'Historial financiero',
-    'tx.new': 'Nueva Transacción', 'tx.type': 'Tipo', 'tx.amount': 'Monto',
-    'tx.description': 'Descripción', 'tx.date': 'Fecha', 'tx.account': 'Cuenta',
-    'tx.category': 'Categoría', 'tx.income': 'Ingreso', 'tx.expense': 'Gasto',
-    'tx.empty': 'Sin transacciones', 'tx.empty_hint': 'Haga clic en "+ Nueva" para comenzar',
-    'acc.title': 'Cuentas', 'acc.subtitle': 'Gestionar cuentas', 'acc.new': 'Nueva Cuenta',
-    'acc.name': 'Nombre', 'acc.type': 'Tipo', 'acc.currency': 'Moneda',
-    'acc.empty': 'Sin cuentas', 'acc.empty_hint': 'Cree una cuenta para empezar',
-    'cat.title': 'Categorías', 'cat.subtitle': 'Organizar ingresos y gastos', 'cat.new': 'Nueva Categoría',
-    'budget.title': 'Presupuestos', 'budget.subtitle': 'Controlar límites',
-    'budget.new': 'Nuevo Presupuesto', 'budget.limit': 'Límite',
-    'budget.empty': 'Sin presupuestos', 'budget.empty_hint': 'Cree un presupuesto',
-    'report.title': 'Informes', 'report.subtitle': 'Análisis financiero', 'report.csv': 'Exportar CSV',
-    'dash.month_summary': 'Resumen del mes', 'dash.recent': 'Transacciones recientes',
-    'nav.finances': 'Finanzas Personales',
-    'toast.pw_changed': '¡Contraseña cambiada!', 'toast.pw_mismatch': 'Las contraseñas no coinciden.',
-    'admin.role_updated': 'Rol actualizado', 'admin.status_updated': 'Estado actualizado',
-    'admin.users': 'Usuarios', 'admin.delete_user': 'Eliminar usuario',
-    'report.no_category': 'Sin categoría', 'report.no_data_period': 'Sin datos para este período',
-    'report.csv_exported': '¡CSV exportado!', 'report.pdf_exported': '¡PDF exportado!',
-    'chart.income_expense': 'Ingresos vs Gastos', 'chart.by_category': 'Gastos por Categoría',
-    'chart.trend': 'Tendencia Mensual', 'chart.budget_usage': 'Uso de Presupuestos',
-    'dash.user_fallback': 'Usuario',
-    'auth.invalid_email': 'Correo electrónico no válido', 'auth.min_password': 'Mínimo 5 caracteres', 'auth.min_name': 'Mínimo 2 caracteres',
-    'auth.email_placeholder': 'ejemplo@correo.com', 'auth.password_placeholder': '••••••', 'auth.name_placeholder': 'Tu nombre',
-    'auth.token_placeholder': 'Token', 'auth.token_prefix': 'Token',
-    'theme.light': 'Modo claro', 'theme.dark': 'Modo oscuro', 'theme.light_label': 'Claro', 'theme.dark_label': 'Oscuro',
-    'currency.aoa': 'AOA - Kwanza', 'currency.usd': 'USD - Dólar', 'currency.eur': 'EUR - Euro',
-    'admin.role_user': 'Usuario', 'admin.role_admin': 'Administrador',
-  },
-  fr: {
-    'nav.dashboard': 'Tableau de bord', 'nav.transactions': 'Transactions', 'nav.accounts': 'Comptes',
-    'nav.categories': 'Catégories', 'nav.budgets': 'Budgets', 'nav.reports': 'Rapports',
-    'nav.settings': 'Paramètres', 'nav.logout': 'Déconnexion',
-    'common.save': 'Enregistrer', 'common.cancel': 'Annuler', 'common.create': 'Créer',
-    'common.delete': 'Supprimer', 'common.yes': 'Oui', 'common.no': 'Non',
-    'auth.login': 'Se connecter', 'auth.register': "S'inscrire",
-    'auth.welcome': 'Bienvenue', 'auth.subtitle': 'Gérez vos finances personnelles',
-    'dash.greeting': 'Bonjour', 'dash.income': 'Revenus', 'dash.expense': 'Dépenses',
-    'dash.balance': 'Solde', 'dash.savings': 'Épargne',
-    'toast.saved': 'Enregistré !', 'toast.deleted': 'Supprimé !',
-    'confirm.delete_title': 'Confirmer la suppression',
-    'auth.email': 'E-mail', 'auth.password': 'Mot de passe', 'auth.name': 'Nom',
-    'auth.forgot': 'Mot de passe oublié ?', 'auth.no_account': 'Pas de compte ?', 'auth.has_account': 'Déjà un compte ?',
-    'common.loading': 'Chargement...', 'common.all': 'Tous', 'common.confirm': 'Confirmer',
-    'common.clear': 'Effacer', 'common.prev': 'Précédent', 'common.next': 'Suivant',
-    'settings.title': 'Paramètres', 'settings.subtitle': 'Personnaliser votre compte',
-    'settings.profile': 'Profil', 'settings.security': 'Sécurité',
-    'settings.language': 'Langue', 'settings.theme': 'Thème',
-    'settings.current_pw': 'Mot de passe actuel', 'settings.new_pw': 'Nouveau mot de passe',
-    'settings.confirm_pw': 'Confirmer', 'settings.change_pw': 'Changer le mot de passe',
-    'settings.save_profile': 'Enregistrer le profil',
-    'tx.title': 'Transactions', 'tx.subtitle': 'Historique financier',
-    'tx.empty': 'Aucune transaction', 'tx.empty_hint': 'Cliquez sur "+ Nouveau" pour commencer',
-    'acc.empty': 'Aucun compte', 'budget.empty': 'Aucun budget',
-    'nav.finances': 'Finances Personnelles',
-    'toast.pw_changed': 'Mot de passe changé !', 'toast.pw_mismatch': 'Les mots de passe ne correspondent pas.',
-    'admin.role_updated': 'Rôle mis à jour', 'admin.status_updated': 'Statut mis à jour',
-    'report.no_category': 'Sans catégorie', 'report.no_data_period': 'Pas de données pour cette période',
-    'chart.income_expense': 'Revenus vs Dépenses', 'chart.by_category': 'Dépenses par Catégorie',
-    'dash.user_fallback': 'Utilisateur',
-    'auth.invalid_email': 'E-mail invalide', 'auth.min_password': 'Minimum 5 caractères', 'auth.min_name': 'Minimum 2 caractères',
-    'auth.email_placeholder': 'exemple@email.com', 'auth.password_placeholder': '••••••', 'auth.name_placeholder': 'Votre nom',
-    'auth.token_placeholder': 'Token', 'auth.token_prefix': 'Token',
-    'theme.light': 'Mode clair', 'theme.dark': 'Mode sombre', 'theme.light_label': 'Clair', 'theme.dark_label': 'Sombre',
-    'currency.aoa': 'AOA - Kwanza', 'currency.usd': 'USD - Dollar', 'currency.eur': 'EUR - Euro',
-    'admin.role_user': 'Utilisateur', 'admin.role_admin': 'Administrateur',
-  },
-  ru: {
-    'nav.dashboard': 'Панель', 'nav.transactions': 'Транзакции', 'nav.accounts': 'Счета',
-    'nav.categories': 'Категории', 'nav.budgets': 'Бюджеты', 'nav.reports': 'Отчёты',
-    'nav.settings': 'Настройки', 'nav.logout': 'Выход',
-    'common.save': 'Сохранить', 'common.cancel': 'Отмена', 'common.create': 'Создать',
-    'common.delete': 'Удалить', 'common.yes': 'Да', 'common.no': 'Нет',
-    'auth.login': 'Войти', 'auth.register': 'Регистрация',
-    'auth.welcome': 'С возвращением', 'dash.greeting': 'Привет',
-    'dash.income': 'Доходы', 'dash.expense': 'Расходы', 'dash.balance': 'Баланс',
-    'toast.saved': 'Сохранено!', 'toast.deleted': 'Удалено!',
-    'auth.email': 'Эл. почта', 'auth.password': 'Пароль', 'auth.name': 'Имя',
-    'auth.forgot': 'Забыли пароль?', 'auth.no_account': 'Нет аккаунта?', 'auth.has_account': 'Уже есть аккаунт?',
-    'common.loading': 'Загрузка...', 'common.all': 'Все', 'common.confirm': 'Подтвердить',
-    'common.edit': 'Редактировать',
-    'settings.title': 'Настройки', 'settings.subtitle': 'Настроить аккаунт',
-    'settings.profile': 'Профиль', 'settings.security': 'Безопасность',
-    'settings.current_pw': 'Текущий пароль', 'settings.new_pw': 'Новый пароль',
-    'settings.confirm_pw': 'Подтвердить пароль', 'settings.change_pw': 'Сменить пароль',
-    'nav.finances': 'Личные Финансы',
-    'auth.invalid_email': 'Некорректный адрес', 'auth.min_password': 'Минимум 5 символов', 'auth.min_name': 'Минимум 2 символа',
-    'auth.email_placeholder': 'primer@email.com', 'auth.password_placeholder': '••••••', 'auth.name_placeholder': 'Ваше имя',
-    'auth.token_placeholder': 'Токен', 'auth.token_prefix': 'Токен',
-    'theme.light': 'Светлая тема', 'theme.dark': 'Тёмная тема', 'theme.light_label': 'Светлая', 'theme.dark_label': 'Тёмная',
-    'currency.aoa': 'AOA - Кванза', 'currency.usd': 'USD - Доллар', 'currency.eur': 'EUR - Евро',
-    'admin.role_user': 'Пользователь', 'admin.role_admin': 'Администратор',
-  },
-  ja: {
-    'nav.dashboard': 'ダッシュボード', 'nav.transactions': '取引', 'nav.accounts': 'アカウント',
-    'nav.categories': 'カテゴリー', 'nav.budgets': '予算', 'nav.reports': 'レポート',
-    'nav.settings': '設定', 'nav.logout': 'ログアウト',
-    'common.save': '保存', 'common.cancel': 'キャンセル', 'common.create': '作成',
-    'common.delete': '削除', 'common.yes': 'はい', 'common.no': 'いいえ',
-    'auth.login': 'ログイン', 'auth.register': '登録',
-    'auth.welcome': 'おかえりなさい', 'dash.greeting': 'こんにちは',
-    'dash.income': '収入', 'dash.expense': '支出', 'dash.balance': '残高',
-    'toast.saved': '保存しました！', 'toast.deleted': '削除しました！',
-    'auth.email': 'メール', 'auth.password': 'パスワード', 'auth.name': '名前',
-    'auth.forgot': 'パスワードをお忘れですか？', 'auth.no_account': 'アカウントをお持ちでないですか？',
-    'common.loading': '読み込み中...', 'common.all': 'すべて', 'common.confirm': '確認',
-    'common.edit': '編集',
-    'settings.title': '設定', 'settings.subtitle': 'アカウントのカスタマイズ',
-    'settings.profile': 'プロフィール', 'settings.security': 'セキュリティ',
-    'settings.current_pw': '現在のパスワード', 'settings.new_pw': '新しいパスワード',
-    'settings.confirm_pw': '確認', 'settings.change_pw': 'パスワード変更',
-    'nav.finances': '個人財務',
-    'auth.invalid_email': '無効なメールアドレス', 'auth.min_password': '最小5文字', 'auth.min_name': '最小2文字',
-    'auth.email_placeholder': 'example@email.com', 'auth.password_placeholder': '••••••', 'auth.name_placeholder': 'お名前',
-    'auth.token_placeholder': 'トークン', 'auth.token_prefix': 'トークン',
-    'theme.light': 'ライトモード', 'theme.dark': 'ダークモード', 'theme.light_label': 'ライト', 'theme.dark_label': 'ダーク',
-    'currency.aoa': 'AOA - クワンザ', 'currency.usd': 'USD - ドル', 'currency.eur': 'EUR - ユーロ',
-    'admin.role_user': 'ユーザー', 'admin.role_admin': '管理者',
-  },
-  it: {
-    'nav.dashboard': 'Pannello', 'nav.transactions': 'Transazioni', 'nav.accounts': 'Conti',
-    'nav.categories': 'Categorie', 'nav.budgets': 'Budget', 'nav.reports': 'Report',
-    'nav.settings': 'Impostazioni', 'nav.logout': 'Esci',
-    'common.save': 'Salva', 'common.cancel': 'Annulla', 'common.create': 'Crea',
-    'common.delete': 'Elimina', 'common.yes': 'Sì', 'common.no': 'No',
-    'auth.login': 'Accedi', 'auth.register': 'Registrati',
-    'auth.welcome': 'Bentornato', 'dash.greeting': 'Ciao',
-    'dash.income': 'Entrate', 'dash.expense': 'Spese', 'dash.balance': 'Saldo',
-    'toast.saved': 'Salvato!', 'toast.deleted': 'Eliminato!',
-    'auth.email': 'Email', 'auth.password': 'Password', 'auth.name': 'Nome',
-    'auth.forgot': 'Password dimenticata?', 'auth.no_account': 'Non hai un account?',
-    'common.loading': 'Caricamento...', 'common.all': 'Tutti', 'common.confirm': 'Conferma',
-    'common.edit': 'Modifica',
-    'settings.title': 'Impostazioni', 'settings.subtitle': 'Personalizza il tuo account',
-    'settings.profile': 'Profilo', 'settings.security': 'Sicurezza',
-    'settings.current_pw': 'Password attuale', 'settings.new_pw': 'Nuova password',
-    'settings.confirm_pw': 'Conferma password', 'settings.change_pw': 'Cambia Password',
-    'nav.finances': 'Finanze Personali',
-    'auth.invalid_email': 'Email non valida', 'auth.min_password': 'Minimo 5 caratteri', 'auth.min_name': 'Minimo 2 caratteri',
-    'auth.email_placeholder': 'esempio@email.com', 'auth.password_placeholder': '••••••', 'auth.name_placeholder': 'Il tuo nome',
-    'auth.token_placeholder': 'Token', 'auth.token_prefix': 'Token',
-    'theme.light': 'Modalità chiara', 'theme.dark': 'Modalità scura', 'theme.light_label': 'Chiaro', 'theme.dark_label': 'Scuro',
-    'currency.aoa': 'AOA - Kwanza', 'currency.usd': 'USD - Dollaro', 'currency.eur': 'EUR - Euro',
-    'admin.role_user': 'Utente', 'admin.role_admin': 'Amministratore',
-  }
+const FALLBACK_PT_TRANSLATIONS: Record<string, string> = {
+  'nav.dashboard': 'Painel', 'nav.transactions': 'Transações', 'nav.accounts': 'Contas',
+  'nav.categories': 'Categorias', 'nav.budgets': 'Orçamentos', 'nav.reports': 'Relatórios',
+  'nav.settings': 'Definições', 'nav.admin': 'Admin', 'nav.logout': 'Sair',
+  'common.save': 'Guardar', 'common.cancel': 'Cancelar', 'common.create': 'Criar',
+  'common.edit': 'Editar', 'common.delete': 'Eliminar', 'common.confirm': 'Confirmar',
+  'common.yes': 'Sim', 'common.no': 'Não', 'common.loading': 'A carregar...',
+  'common.search': 'Pesquisar', 'common.filter': 'Filtrar', 'common.export': 'Exportar',
+  'common.new': 'Novo', 'common.all': 'Todos', 'common.none': 'Nenhum',
+  'auth.login': 'Entrar', 'auth.register': 'Registar', 'auth.email': 'Email',
+  'auth.password': 'Palavra-passe', 'auth.name': 'Nome', 'auth.forgot': 'Esqueceu a senha?',
+  'auth.no_account': 'Não tem conta?', 'auth.has_account': 'Já tem conta?',
+  'auth.welcome': 'Bem-vindo de volta', 'auth.subtitle': 'Gerir as suas finanças pessoais',
+  'dash.greeting': 'Olá', 'dash.month_summary': 'Resumo do mês',
+  'dash.income': 'Receitas', 'dash.expense': 'Despesas', 'dash.balance': 'Saldo',
+  'dash.savings': 'Poupança', 'dash.recent': 'Transações recentes', 'dash.budgets': 'Orçamentos',
+  'tx.title': 'Transações', 'tx.subtitle': 'Histórico financeiro',
+  'tx.new': 'Nova Transação', 'tx.type': 'Tipo', 'tx.amount': 'Valor',
+  'tx.description': 'Descrição', 'tx.date': 'Data', 'tx.account': 'Conta',
+  'tx.category': 'Categoria', 'tx.method': 'Método', 'tx.notes': 'Notas',
+  'tx.income': 'Receita', 'tx.expense': 'Despesa', 'tx.delete_confirm': 'Eliminar esta transação?',
+  'acc.title': 'Contas', 'acc.subtitle': 'Gerir contas financeiras', 'acc.new': 'Nova Conta',
+  'acc.name': 'Nome', 'acc.type': 'Tipo', 'acc.currency': 'Moeda',
+  'acc.cash': 'Dinheiro', 'acc.bank': 'Banco', 'acc.mobile': 'Mobile Money',
+  'acc.savings': 'Poupança', 'acc.other': 'Outro', 'acc.delete_confirm': 'Eliminar esta conta?',
+  'cat.title': 'Categorias', 'cat.subtitle': 'Organizar receitas e despesas',
+  'cat.new': 'Nova Categoria', 'cat.incomes': 'Receitas', 'cat.expenses': 'Despesas',
+  'cat.color': 'Cor', 'cat.icon': 'Ícone', 'cat.default': 'Padrão',
+  'cat.delete_confirm': 'Eliminar esta categoria?',
+  'budget.title': 'Orçamentos', 'budget.subtitle': 'Controlar limites de gastos',
+  'budget.new': 'Novo Orçamento', 'budget.limit': 'Limite', 'budget.period': 'Período',
+  'budget.weekly': 'Semanal', 'budget.monthly': 'Mensal', 'budget.yearly': 'Anual',
+  'budget.start': 'Início', 'budget.end': 'Fim', 'budget.used': 'utilizado',
+  'budget.general': 'Geral (todas)', 'budget.delete_confirm': 'Eliminar este orçamento?',
+  'report.title': 'Relatórios', 'report.subtitle': 'Análise financeira detalhada',
+  'report.by_category': 'Por categoria', 'report.summary': 'Resumo',
+  'report.csv': 'Exportar CSV', 'report.pdf': 'Exportar PDF',
+  'settings.title': 'Definições', 'settings.subtitle': 'Personalizar a sua conta',
+  'settings.profile': 'Perfil', 'settings.security': 'Segurança',
+  'settings.language': 'Idioma', 'settings.theme': 'Tema',
+  'settings.current_pw': 'Palavra-passe actual', 'settings.new_pw': 'Nova palavra-passe',
+  'settings.confirm_pw': 'Confirmar palavra-passe', 'settings.change_pw': 'Alterar Palavra-passe',
+  'settings.save_profile': 'Guardar Perfil',
+  'toast.saved': 'Guardado com sucesso!', 'toast.deleted': 'Eliminado com sucesso!',
+  'toast.error': 'Ocorreu um erro.', 'toast.pw_changed': 'Palavra-passe alterada!',
+  'toast.pw_mismatch': 'As palavras-passe não coincidem.',
+  'confirm.delete_title': 'Confirmar Eliminação',
+  'confirm.delete_msg': 'Tem a certeza que deseja eliminar? Esta acção não pode ser revertida.',
+  "confirm.logout_title": "Terminar Sessão", "confirm.logout_msg": "Deseja sair da sua conta?",
+  'common.clear': 'Limpar', 'common.prev': 'Anterior', 'common.next': 'Próxima',
+  'tx.empty': 'Sem transações', 'tx.empty_hint': 'Clique em "+ Nova Transação" para começar',
+  'budget.empty': 'Sem orçamentos', 'budget.empty_hint': 'Crie um orçamento para controlar os seus gastos',
+  'acc.empty': 'Sem contas', 'acc.empty_hint': 'Crie uma conta para começar',
+  'cat.empty': 'Sem categorias', 'cat.empty_hint': 'Crie uma categoria para organizar',
+  'report.empty': 'Sem dados para o período selecionado',
+  'dash.no_data': 'Sem dados disponíveis',
+  'admin.title': 'Administração', 'admin.subtitle': 'Gestão de utilizadores',
+  'admin.role': 'Papel', 'admin.status': 'Estado', 'admin.active': 'Activo', 'admin.inactive': 'Inactivo',
+  'admin.delete_confirm': 'Eliminar este utilizador?',
+  'admin.role_updated': 'Papel actualizado', 'admin.status_updated': 'Estado actualizado',
+  'admin.users': 'Utilizadores', 'admin.delete_user': 'Eliminar utilizador',
+  'nav.finances': 'Finanças Pessoais',
+  'report.no_category': 'Sem categoria', 'report.no_data_period': 'Sem dados para este período',
+  'report.csv_exported': 'CSV exportado!', 'report.pdf_exported': 'PDF exportado!',
+  'chart.income_expense': 'Receitas vs Despesas', 'chart.by_category': 'Despesas por Categoria',
+  'chart.trend': 'Tendência Mensal', 'chart.budget_usage': 'Uso de Orçamentos',
+  'dash.user_fallback': 'Utilizador',
+  'auth.invalid_email': 'E-mail inválido', 'auth.min_password': 'Mínimo 5 caracteres', 'auth.min_name': 'Mínimo 2 caracteres',
+  'auth.email_placeholder': 'exemplo@email.com', 'auth.password_placeholder': '••••••', 'auth.name_placeholder': 'Seu nome',
+  'auth.token_placeholder': 'Token', 'auth.token_prefix': 'Token',
+  'theme.light': 'Modo claro', 'theme.dark': 'Modo escuro', 'theme.light_label': 'Claro', 'theme.dark_label': 'Escuro',
+  'currency.aoa': 'AOA - Kwanza', 'currency.usd': 'USD - Dólar', 'currency.eur': 'EUR - Euro',
+  'admin.role_user': 'Utilizador', 'admin.role_admin': 'Administrador',
+  'validation.required': 'Campo obrigatório',
+  'validation.min_amount': 'O valor deve ser maior que zero'
 };
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
-  private langSubject = new BehaviorSubject<string>('pt');
+  private translations: any = {};
+  private translationCache: Record<string, any> = {};
+  private currentLoadingLang: string = '';
+  private langSubject = new BehaviorSubject<string>(this.getStoredLang());
   public lang$ = this.langSubject.asObservable();
   public readonly languages = [
     { code: 'pt', label: 'Português' },
@@ -334,25 +93,118 @@ export class I18nService {
     { code: 'fr', label: 'Français' },
     { code: 'ru', label: 'Русский' },
     { code: 'ja', label: '日本語' },
-    { code: 'it', label: 'Italiano' },
+    { code: 'it', label: 'Italiano' }
   ];
 
-  constructor(private appRef: ApplicationRef) {
-    const stored = localStorage.getItem('sgfp_lang');
-    if (stored) this.langSubject.next(stored);
+  constructor(
+    private http: HttpClient,
+    private appRef: ApplicationRef
+  ) {
+    const initialLang = this.langSubject.value;
+    this.loadTranslations(initialLang);
+    this.preloadAllLanguages();
   }
 
-  get currentLang(): string { return this.langSubject.value; }
+  get currentLang(): string {
+    return this.langSubject.value;
+  }
 
   setLanguage(lang: string): void {
-    this.langSubject.next(lang);
     localStorage.setItem('sgfp_lang', lang);
-    // Force all components to re-evaluate i18n.t() bindings in zoneless mode
-    setTimeout(() => this.appRef.tick(), 0);
+    this.langSubject.next(lang);
+    this.loadTranslations(lang);
   }
 
   t(key: string): string {
-    const lang = this.currentLang;
-    return TRANSLATIONS[lang]?.[key] || TRANSLATIONS['pt']?.[key] || key;
+    // Try flat lookup first
+    if (this.translations && this.translations[key]) {
+      return this.translations[key];
+    }
+    // Fallback to dot-split nesting lookup
+    const keys = key.split('.');
+    let result: any = this.translations;
+    for (const k of keys) {
+      result = result?.[k];
+    }
+    if (typeof result === 'string') {
+      return result;
+    }
+    // Static Portuguese translation as final fallback
+    return FALLBACK_PT_TRANSLATIONS[key] || key;
+  }
+
+  translateCategory(name: string | undefined | null): string {
+    if (!name) return '';
+    const mapping: Record<string, string> = {
+      'Salário': 'cat.salary',
+      'Freelance': 'cat.freelance',
+      'Investimentos': 'cat.investments',
+      'Alimentação': 'cat.food',
+      'Transporte': 'cat.transport',
+      'Saúde': 'cat.health',
+      'Educação': 'cat.education',
+      'Lazer': 'cat.leisure',
+      'Habitação': 'cat.housing',
+      'Outros': 'cat.others'
+    };
+    const key = mapping[name];
+    return key ? this.t(key) : name;
+  }
+
+  private preloadAllLanguages(): void {
+    for (const lang of this.languages) {
+      if (lang.code === this.langSubject.value) continue;
+      this.http.get<any>(`/assets/i18n/${lang.code}.json`).subscribe({
+        next: (data) => {
+          this.translationCache[lang.code] = data;
+        },
+        error: () => {
+          this.translationCache[lang.code] = {};
+        }
+      });
+    }
+  }
+
+  private loadTranslations(lang: string): void {
+    if (this.translationCache[lang]) {
+      this.translations = this.translationCache[lang];
+      this.appRef.tick();
+      return;
+    }
+
+    this.currentLoadingLang = lang;
+    this.http.get<any>(`/assets/i18n/${lang}.json`).subscribe({
+      next: (data) => {
+        this.translationCache[lang] = data;
+        if (this.currentLoadingLang === lang) {
+          this.translations = data;
+          setTimeout(() => this.appRef.tick(), 0);
+        }
+      },
+      error: () => {
+        console.warn(`Translation file for '${lang}' not found, falling back to PT`);
+        this.translationCache[lang] = {};
+        if (this.currentLoadingLang === lang) {
+          this.translations = {};
+          setTimeout(() => this.appRef.tick(), 0);
+        }
+      }
+    });
+  }
+
+  private getStoredLang(): string {
+    const stored = localStorage.getItem('sgfp_lang');
+    if (stored) return stored;
+
+    const storedUser = localStorage.getItem('sgfp_user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        if (user && user.language) {
+          return user.language;
+        }
+      } catch (e) {}
+    }
+    return 'pt';
   }
 }

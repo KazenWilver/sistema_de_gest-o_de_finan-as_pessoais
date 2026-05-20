@@ -48,7 +48,7 @@
       <h2 class="card-title" style="margin-bottom:var(--sp-lg)">{{ i18n.t('settings.language') }}</h2>
       <div class="lang-grid">
         @for (lang of i18n.languages; track lang.code) {
-          <button class="lang-btn" [class.active]="i18n.currentLang === lang.code" (click)="i18n.setLanguage(lang.code)">
+          <button class="lang-btn" [class.active]="i18n.currentLang === lang.code" (click)="i18n.setLanguage(lang.code); profile.language = lang.code">
             {{ lang.label }}
           </button>
         }

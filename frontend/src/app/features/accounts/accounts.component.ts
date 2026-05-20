@@ -51,7 +51,11 @@ import { Account } from '../../core/models';
             <h3 class="modal-title">{{ editMode ? i18n.t('common.edit') : i18n.t('acc.new') }}</h3>
             <button class="modal-close" (click)="showModal = false">✕</button>
           </div>
-          <div class="form-group"><label class="form-label" for="acc-name">{{ i18n.t('acc.name') }}</label><input class="form-input" id="acc-name" name="name" [(ngModel)]="form.name"></div>
+          <div class="form-group">
+            <label class="form-label" for="acc-name">{{ i18n.t('acc.name') }}</label>
+            <input class="form-input" [class.is-invalid]="errors['name']" id="acc-name" name="name" [(ngModel)]="form.name">
+            <span class="form-error" *ngIf="errors['name']">{{ i18n.t('validation.required') }}</span>
+          </div>
           <div class="form-group"><label class="form-label">{{ i18n.t('acc.type') }}</label>
             <select class="form-select" id="acc-type" name="type" [(ngModel)]="form.type">
               <option value="cash">{{ i18n.t('acc.cash') }}</option><option value="bank">{{ i18n.t('acc.bank') }}</option>
@@ -85,18 +89,41 @@ export class AccountsComponent implements OnInit {
   accounts: Account[] = [];
   showModal = false; editMode = false; loading = true;
   form: any = { name: '', type: 'cash', currency: 'AOA' };
+  errors: Record<string, boolean> = {};
 
   constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService, private cdr: ChangeDetectorRef) {}
   ngOnInit(): void { this.load(); }
 
   load(): void { this.loading = true; this.api.getAccounts().subscribe({ next: d => { this.accounts = d; this.loading = false; this.cdr.detectChanges(); }, error: () => { this.loading = false; this.cdr.detectChanges(); } }); }
 
-  openCreate(): void { this.editMode = false; this.form = { name: '', type: 'cash', currency: 'AOA' }; this.showModal = true; }
-  openEdit(a: Account): void { this.editMode = true; this.form = { ...a }; this.showModal = true; }
+  openCreate(): void { this.editMode = false; this.errors = {}; this.form = { name: '', type: 'cash', currency: 'AOA' }; this.showModal = true; }
+  openEdit(a: Account): void { this.editMode = true; this.errors = {}; this.form = { ...a }; this.showModal = true; }
+
+  validateForm(): boolean {
+    this.errors = {};
+    let isValid = true;
+    if (!this.form.name || !this.form.name.trim()) {
+      this.errors['name'] = true;
+      isValid = false;
+    }
+    return isValid;
+  }
 
   save(): void {
+    if (!this.validateForm()) {
+      this.toast.error(this.i18n.t('validation.fix_errors'));
+      return;
+    }
     const obs = this.editMode ? this.api.updateAccount(this.form.id, this.form) : this.api.createAccount(this.form);
-    obs.subscribe({ next: () => { this.showModal = false; this.load(); this.toast.success(this.i18n.t('toast.saved')); }, error: () => this.toast.error(this.i18n.t('toast.error')) });
+    obs.subscribe({
+      next: () => { this.showModal = false; this.load(); this.toast.success(this.i18n.t('toast.saved')); },
+      error: (err) => {
+        if (err.error?.errors) {
+          this.errors = err.error.errors;
+        }
+        this.toast.error(err.error?.message || this.i18n.t('toast.error'));
+      }
+    });
   }
 
   async delete(a: Account): Promise<void> {

@@ -40,6 +40,6 @@
 }
 
 @media (max-width: 768px) {
-  .filter-bar { flex-direction: column; }
+  .filter-bar { flex-direction: column; align-items: stretch; }
   .filter-select, .filter-date { width: 100%; min-width: 100%; }
 }

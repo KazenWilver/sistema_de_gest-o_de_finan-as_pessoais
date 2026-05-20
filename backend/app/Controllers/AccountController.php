@@ -37,6 +37,15 @@ class AccountController
         $userId = $request->param('userId');
         $existing = $this->repo->findById($id, $userId);
         if (!$existing) Response::error('Conta não encontrada.', 404);
+
+        $v = new Validator();
+        if (!$v->validate($request->body(), [
+            'name' => 'required|min:2',
+            'type' => 'required|in:cash,bank,mobile_money,savings,other'
+        ])) {
+            Response::error('Dados inválidos.', 422, $v->errors());
+        }
+
         $this->repo->update($id, $userId, $request->body());
         Response::json($this->repo->findById($id, $userId), 200, 'Conta atualizada.');
     }

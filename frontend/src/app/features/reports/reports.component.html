@@ -59,7 +59,7 @@
       @for (item of categoryData; track item.category_name) {
         <div class="cat-bar-row" *ngIf="item.type === 'expense'">
           <div class="cat-bar-label">
-            <span class="fw-700">{{ item.category_name || i18n.t('report.no_category') }}</span>
+            <span class="fw-700">{{ i18n.translateCategory(item.category_name) || i18n.t('report.no_category') }}</span>
             <span class="text-muted">{{ formatCurrency(item.total) }}</span>
           </div>
           <div class="cat-bar-track">

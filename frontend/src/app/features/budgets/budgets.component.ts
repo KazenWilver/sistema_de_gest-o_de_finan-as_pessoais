@@ -24,7 +24,7 @@ import { Budget, Category } from '../../core/models';
             <div class="budget-top">
               <div>
                 <h3 class="budget-name">{{ b.name }}</h3>
-                <p class="budget-cat">{{ b.category_name || i18n.t('budget.general') }} · {{ getPeriodLabel(b.period) }}</p>
+                <p class="budget-cat">{{ i18n.translateCategory(b.category_name) || i18n.t('budget.general') }} · {{ getPeriodLabel(b.period) }}</p>
               </div>
               <div class="flex gap-xs">
                 <button class="btn btn-ghost btn-sm" (click)="openEdit(b)">✏️</button>
@@ -58,12 +58,20 @@ import { Budget, Category } from '../../core/models';
       <div class="modal-backdrop" *ngIf="showModal" (click)="showModal = false">
         <div class="modal" (click)="$event.stopPropagation()">
           <div class="modal-header"><h3 class="modal-title">{{ editMode ? i18n.t('common.edit') : i18n.t('budget.new') }}</h3><button class="modal-close" (click)="showModal = false">✕</button></div>
-          <div class="form-group"><label class="form-label" for="budget-name">{{ i18n.t('acc.name') }}</label><input class="form-input" id="budget-name" name="name" [(ngModel)]="form.name"></div>
-          <div class="form-group"><label class="form-label" for="budget-limit">{{ i18n.t('budget.limit') }}</label><input class="form-input" type="number" id="budget-limit" name="limit_amount" [(ngModel)]="form.limit_amount" min="1"></div>
+          <div class="form-group">
+            <label class="form-label" for="budget-name">{{ i18n.t('acc.name') }}</label>
+            <input class="form-input" [class.is-invalid]="errors['name']" id="budget-name" name="name" [(ngModel)]="form.name">
+            <span class="form-error" *ngIf="errors['name']">{{ i18n.t('validation.required') }}</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="budget-limit">{{ i18n.t('budget.limit') }}</label>
+            <input class="form-input" [class.is-invalid]="errors['limit_amount']" type="number" id="budget-limit" name="limit_amount" [(ngModel)]="form.limit_amount" min="1">
+            <span class="form-error" *ngIf="errors['limit_amount']">{{ i18n.t('validation.min_amount') }}</span>
+          </div>
           <div class="form-group"><label class="form-label">{{ i18n.t('tx.category') }}</label>
             <select class="form-select" id="budget-category" name="category_id" [(ngModel)]="form.category_id">
               <option [ngValue]="null">{{ i18n.t('budget.general') }}</option>
-              @for (c of categories; track c.id) { <option [value]="c.id">{{ c.name }}</option> }
+              @for (c of categories; track c.id) { <option [ngValue]="c.id">{{ i18n.translateCategory(c.name) }}</option> }
             </select>
           </div>
           <div class="form-group"><label class="form-label">{{ i18n.t('budget.period') }}</label>
@@ -73,8 +81,16 @@ import { Budget, Category } from '../../core/models';
               <option value="yearly">{{ i18n.t('budget.yearly') }}</option>
             </select>
           </div>
-          <div class="form-group"><label class="form-label" for="budget-start">{{ i18n.t('budget.start') }}</label><input class="form-input" type="date" id="budget-start" name="start_date" [(ngModel)]="form.start_date"></div>
-          <div class="form-group"><label class="form-label" for="budget-end">{{ i18n.t('budget.end') }}</label><input class="form-input" type="date" id="budget-end" name="end_date" [(ngModel)]="form.end_date"></div>
+          <div class="form-group">
+            <label class="form-label" for="budget-start">{{ i18n.t('budget.start') }}</label>
+            <input class="form-input" [class.is-invalid]="errors['start_date']" type="date" id="budget-start" name="start_date" [(ngModel)]="form.start_date">
+            <span class="form-error" *ngIf="errors['start_date']">{{ i18n.t('validation.required') }}</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="budget-end">{{ i18n.t('budget.end') }}</label>
+            <input class="form-input" [class.is-invalid]="errors['end_date']" type="date" id="budget-end" name="end_date" [(ngModel)]="form.end_date">
+            <span class="form-error" *ngIf="errors['end_date']">{{ i18n.t('validation.required') }}</span>
+          </div>
           <div class="modal-actions">
             <button class="btn btn-secondary" (click)="showModal = false">{{ i18n.t('common.cancel') }}</button>
             <button class="btn btn-primary" (click)="save()">{{ editMode ? i18n.t('common.save') : i18n.t('common.create') }}</button>
@@ -100,6 +116,7 @@ export class BudgetsComponent implements OnInit {
   showModal = false; editMode = false; loading = true;
   Math = Math;
   form: any = { name: '', limit_amount: null, category_id: null, period: 'monthly', start_date: '', end_date: '' };
+  errors: Record<string, boolean> = {};
 
   constructor(private api: ApiService, public i18n: I18nService, private toast: ToastService, private confirm: ConfirmService, private cdr: ChangeDetectorRef) {}
 
@@ -108,18 +125,52 @@ export class BudgetsComponent implements OnInit {
   load(): void { this.loading = true; this.api.getBudgets().subscribe({ next: d => { this.budgets = d; this.loading = false; this.cdr.detectChanges(); }, error: () => { this.loading = false; this.cdr.detectChanges(); } }); }
 
   openCreate(): void {
-    const now = new Date(); this.editMode = false;
+    const now = new Date(); this.editMode = false; this.errors = {};
     this.form = { name: '', limit_amount: null, category_id: null, period: 'monthly',
       start_date: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0],
       end_date: new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
     }; this.showModal = true;
   }
 
-  openEdit(b: Budget): void { this.editMode = true; this.form = { ...b }; this.showModal = true; }
+  openEdit(b: Budget): void { this.editMode = true; this.errors = {}; this.form = { ...b }; this.showModal = true; }
+
+  validateForm(): boolean {
+    this.errors = {};
+    let isValid = true;
+    if (!this.form.name || !this.form.name.trim()) {
+      this.errors['name'] = true;
+      isValid = false;
+    }
+    if (this.form.limit_amount === null || this.form.limit_amount === undefined || this.form.limit_amount <= 0) {
+      this.errors['limit_amount'] = true;
+      isValid = false;
+    }
+    if (!this.form.start_date) {
+      this.errors['start_date'] = true;
+      isValid = false;
+    }
+    if (!this.form.end_date) {
+      this.errors['end_date'] = true;
+      isValid = false;
+    }
+    return isValid;
+  }
 
   save(): void {
+    if (!this.validateForm()) {
+      this.toast.error(this.i18n.t('validation.fix_errors'));
+      return;
+    }
     const obs = this.editMode ? this.api.updateBudget(this.form.id, this.form) : this.api.createBudget(this.form);
-    obs.subscribe({ next: () => { this.showModal = false; this.load(); this.toast.success(this.i18n.t('toast.saved')); }, error: () => this.toast.error(this.i18n.t('toast.error')) });
+    obs.subscribe({
+      next: () => { this.showModal = false; this.load(); this.toast.success(this.i18n.t('toast.saved')); },
+      error: (err) => {
+        if (err.error?.errors) {
+          this.errors = err.error.errors;
+        }
+        this.toast.error(err.error?.message || this.i18n.t('toast.error'));
+      }
+    });
   }
 
   async delete(b: Budget): Promise<void> {

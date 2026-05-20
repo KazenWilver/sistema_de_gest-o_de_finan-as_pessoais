@@ -28,10 +28,11 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit(): void {
     const u = this.auth.currentUser;
-    if (u) this.profile = { name: u.name, email: u.email, currency: u.currency, language: u.language };
+    if (u) this.profile = { name: u.name, email: u.email, currency: u.currency, language: u.language || this.i18n.currentLang };
   }
 
   saveProfile(): void {
+    this.profile.language = this.i18n.currentLang;
     this.auth.updateProfile(this.profile).subscribe({
       next: () => this.toast.success(this.i18n.t('toast.saved')),
       error: () => this.toast.error(this.i18n.t('toast.error'))

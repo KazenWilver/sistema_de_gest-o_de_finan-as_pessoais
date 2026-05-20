@@ -36,6 +36,15 @@ class CategoryController
         $id = (int) $request->param('id');
         $userId = $request->param('userId');
         if (!$this->repo->findById($id, $userId)) Response::error('Categoria não encontrada.', 404);
+
+        $v = new Validator();
+        if (!$v->validate($request->body(), [
+            'name' => 'required|min:2',
+            'type' => 'required|in:income,expense'
+        ])) {
+            Response::error('Dados inválidos.', 422, $v->errors());
+        }
+
         $this->repo->update($id, $userId, $request->body());
         Response::json($this->repo->findById($id, $userId), 200, 'Categoria atualizada.');
     }

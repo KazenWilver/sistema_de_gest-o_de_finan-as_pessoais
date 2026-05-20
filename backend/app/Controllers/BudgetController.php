@@ -39,6 +39,17 @@ class BudgetController
         $id = (int) $request->param('id');
         $userId = $request->param('userId');
         if (!$this->repo->findById($id, $userId)) Response::error('Orçamento não encontrado.', 404);
+
+        $v = new Validator();
+        if (!$v->validate($request->body(), [
+            'name'         => 'required|min:2',
+            'limit_amount' => 'required|numeric|min:1',
+            'start_date'   => 'required|date',
+            'end_date'     => 'required|date',
+        ])) {
+            Response::error('Dados inválidos.', 422, $v->errors());
+        }
+
         $this->repo->update($id, $userId, $request->body());
         Response::json($this->repo->findById($id, $userId), 200, 'Orçamento atualizado.');
     }

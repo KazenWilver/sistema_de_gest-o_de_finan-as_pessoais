@@ -276,6 +276,12 @@ img { max-width: 100%; display: block; }
   padding-right: 40px;
 }
 
+select option {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-family);
+}
+
 .form-error {
   font-size: 12px;
   font-weight: 400;
@@ -405,6 +411,7 @@ textarea.form-input {
    ============================================================ */
 .table-container {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-none);
 }
@@ -718,3 +725,20 @@ tr:hover td { background: var(--color-surface-card); }
 .gap-xs { gap: var(--sp-xs); }
 .gap-sm { gap: var(--sp-sm); }
 .gap-md { gap: var(--sp-md); }
+
+/* ============================================================
+   FORM INPUT ERROR HIGHLIGHTS
+   ============================================================ */
+.form-input.is-invalid, .form-select.is-invalid, .form-textarea.is-invalid {
+  border-color: var(--color-error) !important;
+  &:focus {
+    border-color: var(--color-error) !important;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2) !important;
+  }
+}
+.form-error {
+  color: var(--color-error);
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
