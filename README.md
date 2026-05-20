@@ -28,6 +28,12 @@ O **SGFP** é um sistema web moderno e robusto de gestão de finanças pessoais 
 * **Middleware de Atividade do Utilizador**: O backend em PHP valida a coluna `is_active` na tabela de utilizadores a cada chamada de API protegida. Utilizadores desativados pelo painel administrativo têm o seu acesso imediatamente revogado no próximo pedido.
 * **Credenciais Erradas com Animação Shake**: O cartão de Login e de Registo vibra fisicamente em caso de erro através de micro-animações CSS `@keyframes shake` de alto padrão visual.
 
+### 📄 4. Relatório Executivo Premium (PDF Save & Print)
+* **Geração Sandbox Vetorial**: Em vez de depender de streams corrompidos do servidor PHP FPDF (que causavam PDFs corrompidos por falta de dependências no backend), o sistema utiliza uma janela sandbox de impressão premium no frontend.
+* **Gráficos Corporativos de Alta Resolução**: Extrai em tempo real as renderizações dos gráficos ativos do Chart.js (Doughnut de Categorias e Linha de Tendência) e converte-os para imagens Base64 integradas diretamente no relatório.
+* **Layout Corporativo Fino**: Um design inspirado nas faturas de luxo da Apple, com tipografia *Inter*, cores semânticas controladas por variáveis, badges informativos com as credenciais do utilizador autenticado, cartões de KPIs (Receitas, Despesas, Saldo) e o extrato detalhado completo das transações efetuadas naquele período mensal.
+* **Suporte Nativo Multi-Acção**: Abertura imediata do assistente de impressão do browser, permitindo ao utilizador guardar o ficheiro como PDF com máxima fidelidade vetorial ou realizar a impressão física imediata.
+
 ---
 
 ## 🛠️ Tecnologias Utilizadas
